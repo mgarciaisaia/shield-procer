@@ -3,7 +3,7 @@ echo "Hola, papu"
 who
 while true;
 do
-	read comando
+	read -e comando
 	echo "Ingresaste $comando"
 	eval $comando
 done
