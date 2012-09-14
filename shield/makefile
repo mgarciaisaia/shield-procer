@@ -5,7 +5,6 @@ help :
 script = shield.sh
 rutaScript = $(PWD)/$(script)
 
-# TODO: garantizar que sea root
 esRoot :
 	./utils/chequearRoot.sh
 
