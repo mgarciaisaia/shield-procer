@@ -2,6 +2,9 @@
 
 SCRIPT_SHIELD=$(readlink -f $0)
 DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
+HOME_SHIELD=~/.shield
+
+modulos=`$DIRECTORIO_SHIELD/core/cargarModulos.sh $HOME_SHIELD`
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
 
@@ -13,8 +16,21 @@ trap "" SIGINT
 trap ". $DIRECTORIO_SHIELD/utils/limpiarSesion.sh; exit" 0
 
 function ejecutarModulosDeComando() {
-	return `echo $* | grep a | wc -l`
+	while read linea
+	do
+		eval "$linea $1"
+		retorno=$?
+		if [ $retorno -ne 0 ]
+		then
+			echo "Error ejecutando el modulo $linea - error $retorno"
+			return $retorno
+		fi
+#		echo "Linea: $linea"
+	done <<< "$modulos"
+#	return `echo $* | grep a | wc -l`
 }
+
+
 
 while true
 do
