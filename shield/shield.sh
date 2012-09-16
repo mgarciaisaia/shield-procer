@@ -25,9 +25,7 @@ function ejecutarModulosDeComando() {
 			echo "Error ejecutando el modulo $linea - error $retorno"
 			return $retorno
 		fi
-#		echo "Linea: $linea"
 	done <<< "$modulos"
-#	return `echo $* | grep a | wc -l`
 }
 
 
@@ -35,7 +33,7 @@ function ejecutarModulosDeComando() {
 while true
 do
 	read -e -p "> " comando
-	if ejecutarModulosDeComando $comando
+	if ejecutarModulosDeComando '$comando'
 	then
 		eval $comando
 	fi
