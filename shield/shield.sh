@@ -12,8 +12,15 @@ trap "" SIGINT
 # Trappeo el cierre de sesion para matar los procesos que quedan vivos
 trap ". $DIRECTORIO_SHIELD/utils/limpiarSesion.sh; exit" 0
 
+function ejecutarModulosDeComando() {
+	return `echo $* | grep a | wc -l`
+}
+
 while true
 do
 	read -e -p "> " comando
-	eval $comando
+	if ejecutarModulosDeComando $comando
+	then
+		eval $comando
+	fi
 done
