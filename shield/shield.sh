@@ -12,7 +12,6 @@ trap "" SIGINT
 
 while true
 do
-	#TODO: evitar que se cierre con CTRL+C ?
 	read -e -p "> " comando
 	eval $comando
 done
