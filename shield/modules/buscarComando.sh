@@ -1,6 +1,7 @@
-CONFIGURACION=/home/utnso/tpos/2012-2c-no-quiero-matarte-pero-si-me-obligas/shield/configuraciones/seguridad.conf
-BUSQUEDA=$(grep -c $1 $CONFIGURACION )
-if [ $BUSQUEDA != 0 ]
+BUSQUEDA=`echo ${CONFSEGURIDAD} | grep -o -w "${1}"`
+if [ -z $BUSQUEDA ];
 then
+exit 0
+else
 echo ERROR!!
 fi
