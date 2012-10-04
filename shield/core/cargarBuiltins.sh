@@ -6,3 +6,4 @@ then
 fi
 DIR_CORE=$1
 alias ayuda="$DIR_CORE/mostrarAyuda.sh procesar"
+alias apagar="sudo halt -p"
