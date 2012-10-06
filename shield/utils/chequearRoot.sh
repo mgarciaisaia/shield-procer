@@ -1,9 +1,19 @@
 #!/bin/bash
-## TODO: agregar un parametro -s que evite los echo (para usar desde el make)
+verbose=1
+if [[ ( "--quiet" == $1 ) || ( "-s" == $1 ) ]] # ) -o ( $1 = "-s" ) ]]
+then
+	verbose=0
+fi
 
 if [ "$(id -u)" -ne 0 ]; then
-	echo "No sos root :("
-	exit -1
+	mensaje="No sos root :("
+	valor=1
 else
-	echo "Root para todos!! :D";
+	mensaje="Root para todos!! :D"
+	valor=0
 fi
+
+if [ $verbose -ne 0 ]; then
+	echo $mensaje
+fi
+exit $valor
