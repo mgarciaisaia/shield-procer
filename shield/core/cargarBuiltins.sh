@@ -7,3 +7,5 @@ fi
 DIR_CORE=$1
 alias ayuda="$DIR_CORE/mostrarAyuda.sh procesar"
 alias apagar="sudo halt -p"
+alias listar_modulos='./listar_modulos.sh'
+alias salir='./salir.sh'
