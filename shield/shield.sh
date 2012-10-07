@@ -34,6 +34,7 @@ function ejecutarModulosDeComando() {
 while true
 do
 	read -e -p "> " comando
+	history -s $comando
 	if ejecutarModulosDeComando '$comando'
 	then
 		eval $comando
