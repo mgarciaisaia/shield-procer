@@ -18,17 +18,18 @@ trap ". $DIRECTORIO_SHIELD/utils/limpiarSesion.sh; exit" 0
 function ejecutarModulosDeComando() {
 	while read linea
 	do
-		eval "$linea $1"
-		retorno=$?
-		if [ $retorno -ne 0 ]
+		if test -n "$linea" 
 		then
-			echo "Error ejecutando el modulo $linea - error $retorno"
-			return $retorno
+			eval "$linea $1"
+			retorno=$?
+			if [ $retorno -ne 0 ]
+			then
+				echo "Error ejecutando el modulo $linea - error $retorno"
+				return $retorno
+			fi
 		fi
 	done <<< "$modulos"
 }
-
-
 
 while true
 do

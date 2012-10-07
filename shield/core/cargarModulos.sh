@@ -7,4 +7,4 @@ fi
 while read linea
 do
 	echo ${linea/%:on/}
-done <<< `grep ":on$" $1/comandos.conf`
+done <<< `grep ":on$" $1/conf/comandos.conf | grep -v "$^"`
