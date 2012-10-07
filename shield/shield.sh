@@ -9,6 +9,8 @@ $DIRECTORIO_SHIELD/utils/verificarPeriodicos.sh &
 
 # Ignoramos la SIGINT (CTRL + C)
 trap "" SIGINT
+# Trappeo el cierre de sesion para matar los procesos que quedan vivos
+trap ". $DIRECTORIO_SHIELD/utils/limpiarSesion.sh; exit" 0
 
 while true
 do
