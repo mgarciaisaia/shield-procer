@@ -33,7 +33,7 @@ desinstalar : esRoot
 
 configurar : esRoot usuarioIngresado
 	@mkdir ~$(usuario)/.shield # Si tenia configurado, rompe
-	@# TODO : copiar las config default
+	@cp -r configuraciones/ ~$(usuario)/.shield/conf
 	@# Archivo de log de errores de la shell (**NO** es auditoria)
 	@touch ~$(usuario)/.shield/shell.log
 	@# TODO : SHIELD tiene que poder escribir en shell.log y en el log de auditoria
