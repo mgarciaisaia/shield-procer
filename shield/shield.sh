@@ -4,7 +4,20 @@ SCRIPT_SHIELD=$(readlink -f $0)
 DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
 HOME_SHIELD=~/.shield
 
-modulos=`$DIRECTORIO_SHIELD/core/cargarModulos.sh $HOME_SHIELD`
+function iniciarModulos() {
+	modulos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $HOME_SHIELD $1`
+	if [ $? -ne 0 ]; then
+		echo $modulos # modulos tiene el mensaje de error
+		exit $?
+	fi
+	while read modulo
+	do
+		. $modulo iniciar
+	done <<< "$modulos"
+}
+
+iniciarModulos "comandos"
+iniciarModulos "periodicos"
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
 
