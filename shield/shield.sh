@@ -3,6 +3,7 @@
 SCRIPT_SHIELD=$(readlink -f $0)
 DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
 HOME_SHIELD=~/.shield
+echo " ======== BIENVENIDO A SHIELD ======== "
 
 function iniciarModulos() {
 	modulos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $HOME_SHIELD $1`
@@ -10,6 +11,7 @@ function iniciarModulos() {
 		echo $modulos # modulos tiene el mensaje de error
 		exit $?
 	fi
+
 	while read modulo
 	do
 		. $modulo iniciar
@@ -46,7 +48,7 @@ function ejecutarModulosDeComando() {
 
 while true
 do
-	read -e -p "> " comando
+	read -e -p "$USER - SHIELD: `pwd`> " comando
 	history -s $comando
 	if ejecutarModulosDeComando '$comando'
 	then
