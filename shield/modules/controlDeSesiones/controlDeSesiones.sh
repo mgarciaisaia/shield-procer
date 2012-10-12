@@ -1,19 +1,37 @@
 #!/bin/bash
-
+source controlDeSesiones.conf
 #Comentario de prueba
+echo $CANT_MAXIMA_SESIONES
 
-VALOR_RETORNO=1;
+function obtenerCantSesionesActuales(){
+	USR_SESION=`whoami`;
+	CANT_SESIONES=`who | grep -c $USR_SESION`
+}
+
+function imprimirInformacion(){
+	obtenerCantSesionesActuales
+	echo "----------- MODULO CONTROL DE SESIONES -----------"
+	echo "- Máxima Cantidad de Sesiones Posibles: " $CANT_MAXIMA_SESIONES
+	echo "- Cantidad de Sesiones Activas: " $CANT_SESIONES
+	echo "--------------------------------------------------"
+}
+
+VALOR_RETORNO=0;
+
 case $1 in
 	informacion) 
-		echo información;;
+		echo información;
+		imprimirInformacion;;
 	iniciar)
-		echo iniciar
-		USR_SESION=`whoami`;
-		echo $USR_SESION;
-		echo 2
-		LISTA=`who | grep -c  $USR_SESION`
-		echo 1
-		echo Cantidad de sesiones $LISTA
+		echo iniciar;
+		obtenerCantSesionesActuales;
+		if [ $CANT_SESIONES -gt $CANT_MAXIMA_SESIONES ]; then
+			echo "Más sesiones de las permitidas"
+			VALOR_RETORNO=1;
+		else
+			echo "Menos sesiones de las permitidas";
+			VALOR_RETORNO=0;
+		fi
 		;;
 	procesar)
 		echo procesar;;
