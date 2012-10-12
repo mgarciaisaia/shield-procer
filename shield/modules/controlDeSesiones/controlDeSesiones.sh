@@ -11,9 +11,9 @@ case $1 in
 		USR_SESION=`whoami`;
 		echo $USR_SESION;
 		echo 2
-		LISTA=`who | grep  $USR_SESION`
+		LISTA=`who | grep -c  $USR_SESION`
 		echo 1
-		echo $LISTA
+		echo Cantidad de sesiones $LISTA
 		;;
 	procesar)
 		echo procesar;;
