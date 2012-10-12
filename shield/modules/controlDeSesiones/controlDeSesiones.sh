@@ -11,9 +11,23 @@ function obtenerCantSesionesActuales(){
 function imprimirInformacion(){
 	obtenerCantSesionesActuales
 	echo "----------- MODULO CONTROL DE SESIONES -----------"
-	echo "- Máxima Cantidad de Sesiones Posibles: " $CANT_MAXIMA_SESIONES
-	echo "- Cantidad de Sesiones Activas: " $CANT_SESIONES
+	echo "- Máxima Cantidad de Sesiones Posibles: $CANT_MAXIMA_SESIONES"
+	echo "- Cantidad de Sesiones Activas: $CANT_SESIONES"
 	echo "--------------------------------------------------"
+}
+
+function iniciar(){
+	export CANT_MAXIMA_SESIONES;
+	obtenerCantSesionesActuales;
+	if [ $CANT_SESIONES -gt $CANT_MAXIMA_SESIONES ]; then
+		VALOR_RETORNO=1;
+	else
+		VALOR_RETORNO=0;
+	fi
+}
+
+function detener(){
+	unset CANT_MAXIMA_SESIONES;
 }
 
 VALOR_RETORNO=0;
@@ -24,17 +38,14 @@ case $1 in
 		imprimirInformacion;;
 	iniciar)
 		echo iniciar;
-		obtenerCantSesionesActuales;
-		if [ $CANT_SESIONES -gt $CANT_MAXIMA_SESIONES ]; then
-			echo "Más sesiones de las permitidas"
-			VALOR_RETORNO=1;
-		else
-			echo "Menos sesiones de las permitidas";
-			VALOR_RETORNO=0;
-		fi
+		iniciar;
 		;;
 	procesar)
 		echo procesar;;
+	detener)
+		echo detener;
+		detener;
+		;;
 esac
 
 exit $VALOR_RETORNO;
