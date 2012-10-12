@@ -1,9 +1,9 @@
 #!/bin/bash
 
+source auditoria.config
+
 # Tengo que tener el ip host para hacer el logueo remoto
-UBICACION_LOCAL_LOG=/home/utnso/2012-2c-no-quiero-matarte-pero-si-me-obligas/shield/modules/auditoria/
-TAM_MAX_ARCH_LOG=1000
-FILE_LOG=${UBICACION_LOCAL_LOG}${USER}_log_comandos.txt
+FILE_LOG=${RUTA_ARCHIVO_LOG}${USER}.txt
 
 set -x
 
@@ -28,16 +28,30 @@ function procesar(){
 
 # GENERAR LA CLAVE PUBLICA PARA PROBAR EL LOG REMOTO
 function log_remoto(){
-	archivo=${USER}_log_comandos.txt
+	archivo=${USER}.txt
 	ssh localhost "echo -e $1 >> $archivo"
-#	ssh $ip:"echo $1 >> $ubicacion_archivo"
+#	ssh $IP:"echo $1 >> $ubicacion_archivo"
 }
 
-echo $#
-if (( $# < 2 )) ; then
-	echo "necesita 2 parametros"
-else
-	procesar $1 $2
-#	codigo_de_salida_exitoso
-fi
+informacion(){
+	tamanio_actual_log_local=$(du -b $FILE_LOG | awk '{print $1}') 
+	echo "Tamaño actual del archivo log local: $tamanio_actual_log_local"
+	echo "Dirección del host remoto: $IP"
+}
 
+case $1 in
+	informacion) 
+		informacion
+		;;
+	iniciar)
+#HAY QUE "EXPORTAR" LAS VARIABLES, NO UTILIZAR EL SOURCE QUE HAGO AL PRINCIPIO
+		echo "iniciar"
+		;;
+	detener)
+#HACER UNSET DE LAS VARIABLES EXPORTADAS
+		echo "detener"
+		;;
+	procesar)
+		procesar $2
+		;;
+esac
