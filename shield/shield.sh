@@ -4,6 +4,16 @@ SCRIPT_SHIELD=$(readlink -f $0)
 DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
 HOME_SHIELD=~/.shield
 echo " ======== BIENVENIDO A SHIELD ======== "
+echo "
+           |\`-._/\_.-\`|
+           |    ||    |
+           |___o()o___|
+           |__((<>))__|
+           \   o\/o   /
+            \   ||   /
+             \  ||  /
+              '.||.'
+                ``"
 
 function iniciarModulos() {
 	modulos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $HOME_SHIELD $1`
