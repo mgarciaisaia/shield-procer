@@ -4,7 +4,10 @@ if [ $1 = 'iniciar' ]; then
 	export iniciado='allyourbasearebelongtous'
 	return 0
 fi
-echo $iniciado
+if [ $1 = 'procesar' ]; then
+	echo Y yo te digo que $iniciado
+	return 0
+fi
 if [ "$(echo $@ | grep -c a)" -eq 0 ]; then
 	exit 0
 else

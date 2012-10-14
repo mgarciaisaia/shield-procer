@@ -1,19 +1,14 @@
 #!/bin/bash
 if [ -z $1 ]
 then
-	echo "ERROR - el primer parámetro de $0 debe ser el directorio de configuración de SHIELD"
+	echo "ERROR - el primer parámetro de $0 debe ser la ruta al archivo de modulos"
 	exit 1
 fi
-if [ -z $2 ]
-then
-	echo "ERROR - el segundo parámetro de $0 debe ser el nombre del archivo de comandos" 
-	exit 2
-fi
-archivoModulos=$1/conf/$2.conf
+archivoModulos=$1
 if [ ! -f $archivoModulos ]
 then
 	echo "ERROR - $archivoModulos no es un archivo existente"
-	exit 3
+	exit 2
 fi
 while read linea
 do

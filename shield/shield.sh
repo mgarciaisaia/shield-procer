@@ -15,25 +15,41 @@ echo "
               '.||.'
                 ``"
 
-function iniciarModulos() {
-	modulos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $HOME_SHIELD $1`
-	if [ $? -ne 0 ]; then
-		echo $modulos # modulos tiene el mensaje de error
-		exit $?
-	fi
-
+function inicializarModulos() {
 	while read modulo
 	do
 		. $modulo iniciar
-	done <<< "$modulos"
+	done <<< "$1"
 }
 
-iniciarModulos "comandos"
-iniciarModulos "periodicos"
+function iniciarRegistrarModulos() {
+	for pid in `jobs -p`
+	do
+		kill -9 $pid 2> /dev/null
+	done
+	archivoComandos=$HOME_SHIELD/conf/comandos.conf
+	archivoPeriodicos=$HOME_SHIELD/conf/periodicos.conf
+	hashComandos=$(md5sum $archivoComandos)
+	modulosComando=`$DIRECTORIO_SHIELD/core/listarModulos.sh $archivoComandos`
+	if [ $? -ne 0 ]; then
+		echo $modulosComando # modulos tiene el mensaje de error
+		exit $?
+	fi
+	modulosPeriodicos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $archivoPeriodicos`
+	if [ $? -ne 0 ]; then
+		echo $modulosPeriodicos # modulos tiene el mensaje de error
+		exit $?
+	fi
+	hashPeriodicos=$(md5sum $archivoPeriodicos)
+	inicializarModulos $modulosComando
+	inicializarModulos $modulosPeriodicos
+}
+
+iniciarRegistrarModulos
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
 
-$DIRECTORIO_SHIELD/utils/verificarPeriodicos.sh &
+$DIRECTORIO_SHIELD/utils/verificarPeriodicos.sh $modulosPeriodicos &
 
 # Ignoramos la SIGINT (CTRL + C)
 trap "" SIGINT
@@ -45,7 +61,7 @@ function ejecutarModulosDeComando() {
 	do
 		if test -n "$linea" 
 		then
-			eval "$linea $1"
+			eval "$linea procesar $1"
 			retorno=$?
 			if [ $retorno -ne 0 ]
 			then
