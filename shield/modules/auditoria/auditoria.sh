@@ -39,17 +39,27 @@ informacion(){
 	echo "Dirección del host remoto: $IP"
 }
 
+iniciar(){
+	export TAM_MAX_ARCH_LOG
+	export RUTA_ARCHIVO_LOG
+	export IP
+}
+
+detener(){
+	unset TAM_MAX_ARCH_LOG
+	unset RUTA_ARCHIVO_LOG
+	unset IP
+}
+
 case $1 in
 	informacion) 
 		informacion
 		;;
 	iniciar)
-#HAY QUE "EXPORTAR" LAS VARIABLES, NO UTILIZAR EL SOURCE QUE HAGO AL PRINCIPIO
-		echo "iniciar"
+		iniciar
 		;;
 	detener)
-#HACER UNSET DE LAS VARIABLES EXPORTADAS
-		echo "detener"
+		detener
 		;;
 	procesar)
 		procesar $2
