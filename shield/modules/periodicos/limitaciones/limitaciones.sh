@@ -10,9 +10,6 @@ informacion(){
 	echo "CANTIDAD MAXIMA DE PROCESOS: $MAX_CANTIDAD_PROCESOS"
 	echo "MAXIMA CANTIDAD DE SOCKETS: $MAX_CANTIDAD_SOCKETS"
 	echo "MAXIMA CANTIDAD DE ARCHIVOS: $MAX_CANTIDAD_ARCHIVOS"
-
-#MAXIMA CANTIDAD DE ARCHIVOS ABIERTOS POR SESION
-MAX_CANTIDAD_ARCHIVOS=20
 }
 
 iniciar(){
@@ -41,9 +38,9 @@ procesos_totales=0
 archivos_abiertos_totales=0
 
 #EL FLAG LO UTILIZO PARA NO TENER EN CUENTA LA PRIMER LINEA DEL COMANDO 'ps'
-#procesos_totales=`ps -o pid,pcpu,pmem |
-#	awk 'BEGIN { procesos =  0 ; flag = 0}
-#	{ if(flag > 0) procesos++; flag = 1 }
+#procesos_totales=`ps -o pid,pcpu,pmem | awk ' NR >= 1 ' |
+#	awk 'BEGIN { procesos =  0 }
+#	{ procesos++ }
 #	END {print procesos}'`
 
 #FORMA ENCONTRADA EN GOOGLE
@@ -55,8 +52,8 @@ memoria_total=`ps -o pid,pcpu,pmem | awk ' NR >= 1 ' |
 	END {print memoria}'`
 
 cpu_total=`ps -o pid,pcpu,pmem | awk ' NR >= 1 ' |
-	awk 'BEGIN { cpu = 0 ; flag = 0}
-	{ if(flag > 0) memoria+=$2; flag = 1 }
+	awk 'BEGIN { cpu = 0 }
+	{ memoria+=$2 }
 	END {print cpu}'`
 
 #EN EL FORO UNO LO PROPUSO ASI
@@ -75,11 +72,6 @@ archivos_abiertos_totales=`lsof $sesion | wc -l`
 #	}
 #'`
 #====================================================
-
-#echo "memoria usada: $memoria_total"
-#echo "cpu usada: $cpu_total"
-#echo "cantidad de procesos: $procesos_totales"
-#echo "archivos abiertos por los procesos: $archivos_abiertos_totales"
 
 if (( $MAX_CPU < $cpu_total )) ; then
 	echo "error"
