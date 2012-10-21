@@ -5,7 +5,7 @@ then
 	exit -1
 fi
 DIR_CORE=$1
-alias ayuda="$DIR_CORE/mostrarAyuda.sh procesar"
+alias ayuda="$DIR_CORE/mostrarAyuda.sh"
 alias apagar="sudo halt -p"
 alias salir='exit'
 function mostrar { eval echo $`echo $1`; }
