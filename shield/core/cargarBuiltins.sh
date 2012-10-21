@@ -16,7 +16,7 @@ $modulosComando
 == Modulos periodicos ==
 $modulosPeriodicos"
 }
-
+alias actualizar_modulos="iniciarRegistrarModulos"
 function info_modulos {
 	for modulo in `echo $modulosComando | grep "$1" `
 	do
