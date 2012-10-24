@@ -32,10 +32,14 @@ function detenerModulos() {
 }
 
 function inicializarModulos() {
-	while read modulo
+	for moduloPeriodico in $modulosPeriodicos
 	do
-		. $modulo iniciar
-	done <<< "$1"
+		$moduloPeriodico iniciar 
+	done
+	for moduloComando in $modulosComando
+	do
+		$moduloComando iniciar 
+	done
 }
 
 function iniciarRegistrarModulos() {
@@ -52,10 +56,9 @@ function iniciarRegistrarModulos() {
 		echo $modulosPeriodicos # modulos tiene el mensaje de error
 		exit $?
 	fi
-	inicializarModulos $modulosComando
-	inicializarModulos $modulosPeriodicos
+	inicializarModulos
 	
-	$DIRECTORIO_SHIELD/utils/ejecutarPeriodicos.sh $modulosPeriodicos &
+	$DIRECTORIO_SHIELD/utils/ejecutarPeriodicos.sh "$modulosPeriodicos" &
 	pidPeriodicos=$! # consigue el PID del ultimo proceso que tire en background
 	
 	$DIRECTORIO_SHIELD/utils/verificarConfiguracion.sh $archivoComandos $archivoPeriodicos &

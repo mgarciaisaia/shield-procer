@@ -1,9 +1,9 @@
 #!/bin/bash
 while true
 do
-	while read modulo
+	for modulo in $@
         do
                 . $modulo procesar
-        done <<< "$1"
+        done
 	sleep 5
 done
