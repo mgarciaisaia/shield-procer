@@ -15,6 +15,22 @@ echo "
               '.||.'
                 ``"
 
+
+function detenerModulos() {
+	if [ -v pidPeriodicos ]
+	then
+		kill $pidPeriodicos
+	fi
+	for moduloPeriodico in $modulosPeriodicos
+	do
+		$moduloPeriodico detener
+	done
+	for moduloComando in $modulosComando
+	do
+		$moduloComando detener
+	done
+}
+
 function inicializarModulos() {
 	while read modulo
 	do
@@ -23,10 +39,7 @@ function inicializarModulos() {
 }
 
 function iniciarRegistrarModulos() {
-	for pid in `jobs -p`
-	do
-		kill -9 $pid 2> /dev/null
-	done
+	detenerModulos
 	archivoComandos=$HOME_SHIELD/conf/comandos.conf
 	archivoPeriodicos=$HOME_SHIELD/conf/periodicos.conf
 	hashComandos=$(md5sum $archivoComandos)
@@ -43,18 +56,21 @@ function iniciarRegistrarModulos() {
 	hashPeriodicos=$(md5sum $archivoPeriodicos)
 	inicializarModulos $modulosComando
 	inicializarModulos $modulosPeriodicos
-}
 
-iniciarRegistrarModulos
+	$DIRECTORIO_SHIELD/utils/ejecutarPeriodicos.sh $modulosPeriodicos &
+	pidPeriodicos=$! # consigue el PID del ultimo proceso que tire en background
+	
+}
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
 
-$DIRECTORIO_SHIELD/utils/verificarPeriodicos.sh $modulosPeriodicos &
+iniciarRegistrarModulos
+
 
 # Ignoramos la SIGINT (CTRL + C)
 trap "" SIGINT
 # Trappeo el cierre de sesion para matar los procesos que quedan vivos
-trap ". $DIRECTORIO_SHIELD/utils/limpiarSesion.sh; exit" 0
+trap detenerModulos 0
 
 function ejecutarModulosDeComando() {
 	while read linea
