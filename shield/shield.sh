@@ -42,7 +42,6 @@ function iniciarRegistrarModulos() {
 	detenerModulos
 	archivoComandos=$HOME_SHIELD/conf/comandos.conf
 	archivoPeriodicos=$HOME_SHIELD/conf/periodicos.conf
-	hashComandos=$(md5sum $archivoComandos)
 	modulosComando=`$DIRECTORIO_SHIELD/core/listarModulos.sh $archivoComandos`
 	if [ $? -ne 0 ]; then
 		echo $modulosComando # modulos tiene el mensaje de error
@@ -53,13 +52,13 @@ function iniciarRegistrarModulos() {
 		echo $modulosPeriodicos # modulos tiene el mensaje de error
 		exit $?
 	fi
-	hashPeriodicos=$(md5sum $archivoPeriodicos)
 	inicializarModulos $modulosComando
 	inicializarModulos $modulosPeriodicos
-
+	
 	$DIRECTORIO_SHIELD/utils/ejecutarPeriodicos.sh $modulosPeriodicos &
 	pidPeriodicos=$! # consigue el PID del ultimo proceso que tire en background
 	
+	$DIRECTORIO_SHIELD/utils/verificarConfiguracion.sh $archivoComandos $archivoPeriodicos &
 }
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
@@ -69,6 +68,10 @@ iniciarRegistrarModulos
 
 # Ignoramos la SIGINT (CTRL + C)
 trap "" SIGINT
+
+# Cuando llega SIGUSR2, recargamos los modulos
+trap iniciarRegistrarModulos SIGUSR2
+
 # Trappeo el cierre de sesion para matar los procesos que quedan vivos
 trap detenerModulos 0
 
