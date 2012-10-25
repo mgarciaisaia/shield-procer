@@ -3,11 +3,15 @@ help :
 	@echo "What do you want from me?"
 
 script = shield.sh
-rutaScript = $(shell pwd)/$(script)
+rutaScript = $(destino)/$(script)
 enlaceScript = /usr/bin/$(script)
 
 esRoot :
 	@./utils/chequearRoot.sh --quiet
+
+hola :
+	@echo $(destino)
+	@echo $(rutaScript)
 
 usuarioIngresado:
 ifndef usuario
@@ -19,16 +23,34 @@ endif
 usuarioConfigurado: usuarioIngresado
 	@test -e ~$(usuario)/.shield
 
-instalar : esRoot
-	@chmod +x $(script)
+noEstaInstalado:
+	@test ! -e $(enlaceScript)
+
+estaInstalado:
+	@test -e $(enlaceScript)
+
+nadieConfigurado:
+	@./utils/nadieConfigurado.sh --quiet
+
+ifndef destino
+destino = /etc/shield
+else
+destino = $(destino:/=)
+endif
+
+instalar : esRoot noEstaInstalado
+	@cp -R . $(destino)
+	@cd $(destino)
+	@chmod +x $(rutaScript)
 	@ln -s $(rutaScript) $(enlaceScript) 
 	@addgroup shield
 	@echo '%shield	ALL = NOPASSWD: /sbin/halt' > /etc/sudoers.d/42-shield
 	@chmod 440 /etc/sudoers.d/42-shield
 
-desinstalar : esRoot
+desinstalar : esRoot estaInstalado nadieConfigurado
 	@rm /etc/sudoers.d/42-shield
 	@delgroup shield
+	@rm -rf $(shell dirname $$(readlink $(enlaceScript)))
 	@rm $(enlaceScript) 
 
 configurar : esRoot usuarioIngresado
