@@ -3,6 +3,16 @@
 SCRIPT_SHIELD=$(readlink -f $0)
 DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
 HOME_SHIELD=~/.shield
+
+export TIEMPO_MONITOR_CONFIGURACION=5
+export TIEMPO_EJECUCION_PERIODICOS=10
+
+# overridea variables desde archivo de configuracion
+if [ -f $HOME_SHIELD/conf/shield.conf ]
+then
+	. $HOME_SHIELD/conf/shield.conf
+fi
+
 echo " ======== BIENVENIDO A SHIELD ======== "
 echo "
            |\`-._/\_.-\`|

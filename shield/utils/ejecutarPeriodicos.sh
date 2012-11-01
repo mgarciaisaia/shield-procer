@@ -3,7 +3,7 @@ while true
 do
 	for modulo in $@
         do
-                . $modulo procesar
+                $modulo procesar
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
@@ -12,5 +12,5 @@ do
 			exit $codigoSalida
 		fi
         done
-	sleep 5
+	sleep $TIEMPO_EJECUCION_PERIODICOS
 done
