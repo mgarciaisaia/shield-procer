@@ -6,7 +6,7 @@ if [ $1 = 'iniciar' ]; then
 fi
 if [ $1 = 'procesar' ]; then
 	echo Y yo te digo que $iniciado
-	return 0
+	exit
 fi
 if [ $1 = 'informacion' ]; then
 	echo "TUNGA!"

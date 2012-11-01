@@ -23,34 +23,34 @@ function detenerModulos() {
 	fi
 	for moduloPeriodico in $modulosPeriodicos
 	do
-		$moduloPeriodico detener
+		. $moduloPeriodico detener
 	done
 	for moduloComando in $modulosComando
 	do
-		$moduloComando detener
+		. $moduloComando detener
 	done
 }
 
 function inicializarModulos() {
 	for moduloPeriodico in $modulosPeriodicos
 	do
-		$moduloPeriodico iniciar
+		. $moduloPeriodico iniciar
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
 			# FIXME: loggear
-			echo "$codigoSalida - BUAAAA!"
+			echo "Error inicializando el modulo $moduloPeriodico - error $codigoSalida"
 			exit $?
 		fi
 	done
 	for moduloComando in $modulosComando
 	do
-		$moduloComando iniciar
+		. $moduloComando iniciar
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
 			# FIXME: loggear
-			echo "$codigoSalida - BUAAAA!"
+			echo "Error inicializando el modulo $moduloComando - error $codigoSalida"
 			exit $?
 		fi
 	done
@@ -93,19 +93,17 @@ trap iniciarRegistrarModulos SIGUSR2
 trap detenerModulos 0
 
 function ejecutarModulosDeComando() {
-	while read linea
+	for moduloComando in $modulosComando
 	do
-		if test -n "$linea" 
+		$moduloComando procesar $1
+		codigoSalida=$?
+		if [ $codigoSalida -ne 0 ]
 		then
-			eval "$linea procesar $1"
-			retorno=$?
-			if [ $retorno -ne 0 ]
-			then
-				echo "Error ejecutando el modulo $linea - error $retorno"
-				return $retorno
-			fi
+			# FIXME: loggear
+			echo "Error ejecutando el modulo $moduloComando - error $codigoSalida"
+			exit $?
 		fi
-	done <<< "$modulos"
+	done
 }
 
 while true

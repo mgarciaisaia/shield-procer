@@ -4,6 +4,13 @@ do
 	for modulo in $@
         do
                 . $modulo procesar
+		codigoSalida=$?
+		if [ $codigoSalida -ne 0 ]
+		then
+			# FIXME: loggear
+			echo "Comando $modulo dio $codigoSalida"
+			exit $codigoSalida
+		fi
         done
 	sleep 5
 done
