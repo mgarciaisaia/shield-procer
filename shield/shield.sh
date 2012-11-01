@@ -34,11 +34,25 @@ function detenerModulos() {
 function inicializarModulos() {
 	for moduloPeriodico in $modulosPeriodicos
 	do
-		$moduloPeriodico iniciar 
+		$moduloPeriodico iniciar
+		codigoSalida=$?
+		if [ $codigoSalida -ne 0 ]
+		then
+			# FIXME: loggear
+			echo "$codigoSalida - BUAAAA!"
+			exit $?
+		fi
 	done
 	for moduloComando in $modulosComando
 	do
-		$moduloComando iniciar 
+		$moduloComando iniciar
+		codigoSalida=$?
+		if [ $codigoSalida -ne 0 ]
+		then
+			# FIXME: loggear
+			echo "$codigoSalida - BUAAAA!"
+			exit $?
+		fi
 	done
 }
 
