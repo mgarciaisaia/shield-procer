@@ -1,8 +1,8 @@
 #!/bin/bash -i
 
-SCRIPT_SHIELD=$(readlink -f $0)
-DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
-HOME_SHIELD=~/.shield
+export SCRIPT_SHIELD=$(readlink -f $0)
+export DIRECTORIO_SHIELD=$(dirname $SCRIPT_SHIELD)
+export HOME_SHIELD=~/.shield
 
 export TIEMPO_MONITOR_CONFIGURACION=5
 export TIEMPO_EJECUCION_PERIODICOS=10
@@ -105,7 +105,7 @@ trap detenerModulos 0
 function ejecutarModulosDeComando() {
 	for moduloComando in $modulosComando
 	do
-		$moduloComando procesar $1
+		$moduloComando procesar "$1"
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
@@ -120,7 +120,7 @@ while true
 do
 	read -e -p "$USER - SHIELD: `pwd`> " comando
 	history -s $comando
-	if ejecutarModulosDeComando '$comando'
+	if ejecutarModulosDeComando "$comando"
 	then
 		eval $comando
 	fi

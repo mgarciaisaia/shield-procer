@@ -46,6 +46,9 @@ instalar : esRoot noEstaInstalado
 	@addgroup shield
 	@echo '%shield	ALL = NOPASSWD: /sbin/halt' > /etc/sudoers.d/42-shield
 	@chmod 440 /etc/sudoers.d/42-shield
+	@ssh-keygen -q -t rsa -C "SHIELD's key" -f $(destino)/clave_auditoria -N ''
+	@chown root:shield $(destino)/clave_auditoria
+	@chmod g+r $(destino)/clave_auditoria
 
 desinstalar : esRoot estaInstalado nadieConfigurado
 	@rm /etc/sudoers.d/42-shield
@@ -57,9 +60,8 @@ configurar : esRoot usuarioIngresado
 	@mkdir ~$(usuario)/.shield # Si tenia configurado, rompe
 	@cp -r configuraciones/ ~$(usuario)/.shield/conf
 	@# Archivo de log de errores de la shell (**NO** es auditoria)
-	@touch ~$(usuario)/.shield/shell.log
-	@# TODO : SHIELD tiene que poder escribir en shell.log y en el log de auditoria
-	@#chown $(usuario) ~$(usuario)/.shield/shell.log
+	@touch ~$(usuario)/.shield/shell.log ~$(usuario)/.shield/auditoria.log
+	@chown $(usuario) ~$(usuario)/.shield/shell.log ~$(usuario)/.shield/auditoria.log
 	@# Backupeo la shell actual (7ma entrada del /etc/passwd separado por : )
 	@getent passwd $(usuario) | cut -d: -f7 > ~$(usuario)/.shield/previous_shell
 	@chsh -s $(enlaceScript) $(usuario)
