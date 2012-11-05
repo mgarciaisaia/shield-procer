@@ -44,7 +44,7 @@ instalar : esRoot noEstaInstalado
 	@chmod +x $(rutaScript)
 	@ln -s $(rutaScript) $(enlaceScript) 
 	@addgroup shield
-	@echo '%shield	ALL = NOPASSWD: /sbin/halt' > /etc/sudoers.d/42-shield
+	@echo '%shield	ALL = NOPASSWD: /sbin/halt, /bin/ls /proc/*' > /etc/sudoers.d/42-shield
 	@chmod 440 /etc/sudoers.d/42-shield
 	@ssh-keygen -q -t rsa -C "SHIELD's key" -f $(destino)/clave_auditoria -N ''
 	@chown root:shield $(destino)/clave_auditoria
