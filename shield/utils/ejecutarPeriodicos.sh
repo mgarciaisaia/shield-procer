@@ -9,7 +9,7 @@ do
 		then
 			# FIXME: loggear
 			echo "Comando $modulo dio $codigoSalida"
-			exit $codigoSalida
+			kill -6 $PPID # Bajamos la persiana
 		fi
         done
 	sleep $TIEMPO_EJECUCION_PERIODICOS

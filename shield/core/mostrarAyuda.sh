@@ -2,7 +2,6 @@
 
 #Pregunto si tiene parametros y si no muestro ayuda de todos los builtins
 
-#set -x
 AYUDA="Brinda ayuda sobre el buit-in ingresado, de no ingresar ninguno, brinda ayuda de todos los  built-ins"
 INFOM="Muestra información sobre los módulos que contengan la cadena ingresada, de no ingresar ninguna cadena,  muestra información sobre todos los módulos"
 LISTAR="Lista el path absolutos de los modulos que tiene activos"

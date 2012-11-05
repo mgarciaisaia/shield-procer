@@ -31,6 +31,10 @@ function detenerModulos() {
 	then
 		kill $pidPeriodicos
 	fi
+	if [ -v pidVerificarConfiguracion ]
+	then
+		kill $pidVerificarConfiguracion
+	fi
 	for moduloPeriodico in $modulosPeriodicos
 	do
 		. $moduloPeriodico detener
@@ -86,6 +90,7 @@ function iniciarRegistrarModulos() {
 	pidPeriodicos=$! # consigue el PID del ultimo proceso que tire en background
 	
 	$DIRECTORIO_SHIELD/utils/verificarConfiguracion.sh $archivoComandos $archivoPeriodicos &
+	pidVerificarConfiguracion=$!
 }
 
 . $DIRECTORIO_SHIELD/core/cargarBuiltins.sh $DIRECTORIO_SHIELD/core
