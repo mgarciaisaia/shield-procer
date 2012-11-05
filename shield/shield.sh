@@ -111,7 +111,7 @@ function ejecutarModulosDeComando() {
 		then
 			# FIXME: loggear
 			echo "Error ejecutando el modulo $moduloComando - error $codigoSalida"
-			exit $?
+			return $codigoSalida
 		fi
 	done
 }
