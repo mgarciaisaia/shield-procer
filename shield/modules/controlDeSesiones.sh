@@ -1,7 +1,4 @@
 #!/bin/bash
-source controlDeSesiones.conf
-#Comentario de prueba
-echo $CANT_MAXIMA_SESIONES
 
 function obtenerCantSesionesActuales(){
 	USR_SESION=`whoami`;
@@ -17,35 +14,25 @@ function imprimirInformacion(){
 }
 
 function iniciar(){
-	export CANT_MAXIMA_SESIONES;
-	obtenerCantSesionesActuales;
+	. $HOME_SHIELD/conf/controlDeSesiones.conf
+	export CANT_MAXIMA_SESIONES
+	obtenerCantSesionesActuales
 	if [ $CANT_SESIONES -gt $CANT_MAXIMA_SESIONES ]; then
-		VALOR_RETORNO=1;
-	else
-		VALOR_RETORNO=0;
+		return 1
 	fi
 }
 
 function detener(){
-	unset CANT_MAXIMA_SESIONES;
+	unset CANT_MAXIMA_SESIONES
 }
-
-VALOR_RETORNO=0;
 
 case $1 in
 	informacion) 
-		echo información;
 		imprimirInformacion;;
 	iniciar)
-		echo iniciar;
-		iniciar;
-		;;
+		iniciar;;
 	procesar)
-		echo procesar;;
+		;; # No hacemos nada
 	detener)
-		echo detener;
-		detener;
-		;;
+		detener;;
 esac
-
-exit $VALOR_RETORNO;
