@@ -6,10 +6,10 @@ FILE_LOG=$HOME_SHIELD/auditoria.log
 function procesar(){
 #VERIFICA SI EXISTE EL ARCHIVO LOG LOCAL
 	if [ ! -f $FILE_LOG ] ; then
-		echo "Error - no existe el archivo de auditoria local"
+		shieldLog ERROR "${BASH_SOURCE[0]}: no existe el archivo de auditoria local"
 		exit 1
 	fi
-	tamanio_actual_log_local=$(du -b $FILE_LOG | awk '{print $1}') 
+	tamanio_actual_log_local=$(du -b $FILE_LOG | awk '{print $1}')
 	tamanio_comando=${#1}
 	tamanio_archivo_mas_comando=$(($tamanio_actual_log_local + $tamanio_comando))
 #COMPRUEBA SI PUEDE LOGUEAR LOCALMENTE O SI LO HACE EN REMOTO
@@ -32,7 +32,7 @@ iniciar(){
 	retornoCargarConf=$?
 	if [ $retornoCargarConf -ne 0 ]
 	then
-		echo "Error cargando la configuracion del modulo"
+		shieldLog ERROR "${BASH_SOURCE[0]}: error cargando la configuracion del modulo" $retornoCargarConf
 		return $retornoCargarConf
 	fi
 	export TAM_MAX_ARCH_LOG

@@ -7,8 +7,7 @@ do
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
-			# FIXME: loggear
-			echo "Comando $modulo dio $codigoSalida"
+			shieldLog ERROR "Falló el módulo periódico $modulo" $codigoSalida
 			kill -6 $PPID # Bajamos la persiana
 		fi
         done

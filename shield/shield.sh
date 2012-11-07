@@ -71,9 +71,8 @@ function inicializarModulos() {
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
-			# FIXME: loggear
-			echo "Error inicializando el modulo $moduloPeriodico - error $codigoSalida"
-			exit $?
+			shieldLog ERROR "Error inicializando el modulo $moduloPeriodico" $codigoSalida
+			exit $codigoSalida
 		fi
 	done
 	for moduloComando in $modulosComando
@@ -82,9 +81,8 @@ function inicializarModulos() {
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
-			# FIXME: loggear
-			echo "Error inicializando el modulo $moduloComando - error $codigoSalida"
-			exit $?
+			shieldLog ERROR "Error inicializando el modulo $moduloComando" $codigoSalida
+			exit $codigoSalida
 		fi
 	done
 }
@@ -94,14 +92,16 @@ function iniciarRegistrarModulos() {
 	archivoComandos=$HOME_SHIELD/conf/comandos.conf
 	archivoPeriodicos=$HOME_SHIELD/conf/periodicos.conf
 	modulosComando=`$DIRECTORIO_SHIELD/core/listarModulos.sh $archivoComandos`
-	if [ $? -ne 0 ]; then
-		echo $modulosComando # modulos tiene el mensaje de error
-		exit $?
+	codigoSalida=$?
+	if [ $codigoSalida -ne 0 ]; then
+		shieldLog ERROR "$modulosComando" $codigoSalida # modulosComando tiene el mensaje de error
+		exit $codigoSalida
 	fi
 	modulosPeriodicos=`$DIRECTORIO_SHIELD/core/listarModulos.sh $archivoPeriodicos`
-	if [ $? -ne 0 ]; then
-		echo $modulosPeriodicos # modulos tiene el mensaje de error
-		exit $?
+	codigoSalida=$?
+	if [ $codigoSalida -ne 0 ]; then
+		shieldLog ERROR "$modulosPeriodicos" $codigoSalida # modulosPeriodicos tiene el mensaje de error
+		exit $codigoSalida
 	fi
 	inicializarModulos
 	
@@ -133,8 +133,7 @@ function ejecutarModulosDeComando() {
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then
-			# FIXME: loggear
-			echo "Error ejecutando el modulo $moduloComando - error $codigoSalida"
+			shieldLog ERROR "Error ejecutando el modulo $moduloComando" $codigoSalida
 			return $codigoSalida
 		fi
 	done
