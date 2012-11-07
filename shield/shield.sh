@@ -13,6 +13,25 @@ then
 	. $HOME_SHIELD/conf/shield.conf
 fi
 
+function shieldLog() {
+	nivelLog=$1
+	mensajeLog=$2
+	#Opcional
+	if [ -n $3 ]
+	then
+		codigoError=" - Exit code: $3"
+	else
+		codigoError=''
+	fi
+
+
+	mensaje="$nivelLog - $mensajeLog$codigoError"
+	echo "$mensaje"
+	echo "$mensaje" >> $HOME_SHIELD/shell.log
+}
+
+export -f shieldLog
+
 echo " ======== BIENVENIDO A SHIELD ======== "
 echo "
            |\`-._/\_.-\`|
