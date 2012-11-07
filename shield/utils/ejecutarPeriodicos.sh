@@ -3,7 +3,7 @@ while true
 do
 	for modulo in $@
         do
-                $modulo procesar
+                . $modulo procesar
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then

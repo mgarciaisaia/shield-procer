@@ -7,7 +7,7 @@ function procesar(){
 #VERIFICA SI EXISTE EL ARCHIVO LOG LOCAL
 	if [ ! -f $FILE_LOG ] ; then
 		shieldLog ERROR "${BASH_SOURCE[0]}: no existe el archivo de auditoria local"
-		exit 1
+		return 1
 	fi
 	tamanio_actual_log_local=$(du -b $FILE_LOG | awk '{print $1}')
 	tamanio_comando=${#1}

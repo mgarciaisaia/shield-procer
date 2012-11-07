@@ -129,7 +129,7 @@ trap detenerModulos 0
 function ejecutarModulosDeComando() {
 	for moduloComando in $modulosComando
 	do
-		$moduloComando procesar "$1"
+		. $moduloComando procesar "$1"
 		codigoSalida=$?
 		if [ $codigoSalida -ne 0 ]
 		then

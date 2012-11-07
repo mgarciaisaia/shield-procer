@@ -20,7 +20,7 @@ function filtrarComandosProhibidos() {
 	do
 		RESULTADO=`echo "$1" | grep -wc $comando_prohibido`
 		if [ $RESULTADO -ne 0  ] ; then
-			exit 1
+			return 1
 		fi
 	done 
 }

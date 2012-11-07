@@ -16,4 +16,4 @@ case $1 in
 	;;
 esac
 
-exit $VALOR_RETORNO;
+return $VALOR_RETORNO;

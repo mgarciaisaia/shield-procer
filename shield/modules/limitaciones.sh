@@ -61,19 +61,19 @@ procesar() {
 	leerValoresLimitaciones
 	if [ $(awk 'BEGIN{ print '$MAX_CPU'<'$cpu_total' }') -ne 0 ] ; then
 		echo "Superado el uso máximo de CPU: ${cpu_total}% (máx: ${MAX_CPU}%)"
-		exit 1
+		return 1
 	elif (( $MAX_MEMORIA < $memoria_total )) ; then
 		echo "Superado el uso máximo de memoria: ${memoria_total}KiB (máx: ${MAX_MEMORIA}KiB)"
-		exit 1
+		return 1
 	elif (( $MAX_CANTIDAD_PROCESOS < $procesos_totales )) ; then
 		echo "Superada la cantidad máxima de procesos: ${procesos_totales} (máx: ${MAX_CANTIDAD_PROCESOS})"
-		exit 1
+		return 1
 	elif (( $MAX_CANTIDAD_ARCHIVOS < $archivos_abiertos_totales )) ; then
 		echo "Superada la cantidad máxima de archivos abiertos: ${archivos_abiertos_totales} (máx: ${MAX_CANTIDAD_ARCHIVOS})"
-		exit 1
+		return 1
 	elif (( $MAX_CANTIDAD_SOCKETS < $sockets_totales )) ; then
 		echo "Superada la cantidad máxima de sockets abiertos: ${sockets_totales} (máx: ${MAX_CANTIDAD_SOCKETS})"
-		exit 1
+		return 1
 	fi
 }
 
