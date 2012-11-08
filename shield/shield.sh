@@ -17,7 +17,7 @@ function shieldLog() {
 	nivelLog=$1
 	mensajeLog=$2
 	#Opcional
-	if [ -n $3 ]
+	if [ -n "$3" ]
 	then
 		codigoError=" - Exit code: $3"
 	else
