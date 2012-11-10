@@ -58,6 +58,16 @@ int main(int argc, char* argv[]) {
 	}
 	
 	close(script); // TODO: error handling
+	
+	while((bytesLeidos = recv(conexion, &buffer, TAMANIO_BUFFER, 0)) > 0) {
+		
+		otroBuffer = malloc(bytesLeidos + 1);
+		memcpy(otroBuffer, buffer, bytesLeidos);
+		otroBuffer[bytesLeidos] = '\0';
+		printf("Lei la linea: %s\n", otroBuffer);
+		free(otroBuffer);
+	}
+
 	close(conexion);
 }
 
