@@ -13,11 +13,15 @@
 
 struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port);
 
+#define ERROR_PARAMETROS 1
+#define NO_PP_IP 2
+#define NO_PP_PUERTO 3
+
 int main(int argc, char* argv[]) {
 	if(argc != 2) {
 		printf("Error de parámetros\n");
 		printf("** USO: %s SCRIPT_ANSISOP\n", argv[0]);
-		exit(1);
+		exit(ERROR_PARAMETROS);
 	}
 	
 	char *pathScript = argv[1];
@@ -28,8 +32,19 @@ int main(int argc, char* argv[]) {
 	}
 	
 	char* direccionPP = getenv("PP_IP");
-	char* puertoPP = getenv("PP_Puerto");
+	if(direccionPP == NULL) {
+		printf("Error - debe setearse la variable de entorno PP_IP con la IP del Proceso Planificador\n");
+		printf("Ejemplo: export PP_IP=127.0.0.1\n");
+		exit(NO_PP_IP);
+	}
 	
+	char* puertoPP = getenv("PP_Puerto");
+	if(puertoPP == NULL) {
+		printf("Error - debe setearse la variable de entorno PP_Puerto con el puerto del Proceso Planificador\n");
+		printf("Ejemplo: export PP_Puerto=4925\n");
+		exit(NO_PP_PUERTO);
+	}
+
 	printf("Nos conectamos a %s:%s\n", direccionPP, puertoPP);
 	
 	int conexion = socket(PF_INET, SOCK_STREAM, 0);
@@ -57,7 +72,10 @@ int main(int argc, char* argv[]) {
 		free(otroBuffer);
 	}
 	
-	close(script); // TODO: error handling
+	if(close(script)) {
+	       printf("Error %d cerrando el archivo del script: %s\n", errno, strerror(errno));
+	       exit(errno);
+	}
 	
 	char confirmar = 0;
 	char *pedidoReanudar = "1REANUDARPROCESO";
