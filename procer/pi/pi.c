@@ -59,13 +59,27 @@ int main(int argc, char* argv[]) {
 	
 	close(script); // TODO: error handling
 	
+	char confirmar = 0;
+	char *pedidoReanudar = "1REANUDARPROCESO";
+	
 	while((bytesLeidos = recv(conexion, &buffer, TAMANIO_BUFFER, 0)) > 0) {
-		
-		otroBuffer = malloc(bytesLeidos + 1);
-		memcpy(otroBuffer, buffer, bytesLeidos);
-		otroBuffer[bytesLeidos] = '\0';
-		printf("Lei la linea: %s\n", otroBuffer);
+		confirmar = buffer[0] == '1';
+		otroBuffer = malloc(bytesLeidos);
+		memcpy(otroBuffer, buffer + 1, bytesLeidos - 1);
+		otroBuffer[bytesLeidos - 1] = '\0';
+		printf("PROCER dice: %s\n", otroBuffer);
 		free(otroBuffer);
+		
+		if(confirmar) {
+			printf("Proceso suspendido - presione ENTER para reanudar la ejecucion...\n");
+			// FIXME: si apreto varios ENTER seguidos, los proximos getchar directamente consmen esas teclas.
+			// Habria que limpiar el buffer o algo asi - no se como.
+			system("stty cbreak -echo");
+			getchar();
+			system("stty cooked echo");
+			send(conexion, pedidoReanudar, strlen(pedidoReanudar) + 1, 0);
+			printf("Proceso reanudado\n");
+		}
 	}
 
 	close(conexion);
