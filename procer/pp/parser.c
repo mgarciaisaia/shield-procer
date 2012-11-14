@@ -1,0 +1,289 @@
+/*
+ ============================================================================
+ Name        : Parser.c
+ Author      : 
+ Version     :
+ Copyright   : Your copyright notice
+ Description : Hello World in C, Ansi-style
+ ============================================================================
+ */
+// todo: PROBAR UNA SALTO A UNA ETIQUETA SIMPLE!!!!!!!!!!!!!1
+// CREO QUE VA BORRANDO LÍNEAS DE pcb->codigo TENGO QUE HACER UN COPY PARA TRABAJARLAS
+#include "parser.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "temporal.h"
+#include "string.h"
+#include "collections/dictionary.h"
+#include <string.h>
+#include "collections/pila.h"
+
+int main(void) {
+
+	t_pcb * pcb = malloc(sizeof(t_pcb));
+	char * programa =
+//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\na=-3+a\nimprimir a\nfin_programa\n";
+//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\n\ta=-1\n\tf1()\n\timprimir a\nfin_programa\ncomienzo_funcion f1\n\ta=-3-a\n\tf2()\nfin_funcion f1\ncomienzo_funcion f2\n\ta=a-0\nfin_funcion";
+//			"#!/home/utnso/pi\n# Comentario\nvariables i\ncomienzo_programa\n\ta=4\n\ti=3\n\tinicio_for:\n\ti=i-1\n\ta=a+2\n\tsnc i inicio_for\n\timprimir i\n\timprimir a\nfin_programa";
+//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables i,b\n\ncomienzo_programa\n\ti=1\n\tinicio_for:\n\ti=i+1\n\timprimir i\n\tb=i-10\n\tsnc b inicio_for\nfin_programa";
+//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a\n\ncomienzo_programa\n\ta=1\n\ta=a+1\n\ta=a+2\n\timprimir a\nfin_programa";
+			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
+	cargar_estructuras(programa, pcb);
+	procesar(pcb);
+	eliminar_estructuras(pcb);
+	return EXIT_SUCCESS;
+}
+
+/*
+ * Se carga la estructura del PCB
+ * Cargo los diccionarios de variables(no se setean acá!!!), funciones y etiquetas, para que al procesar
+ * ya tenga las referencias
+ */
+void cargar_estructuras(char* programa, t_pcb * pcb) {
+	pcb->id_proceso = 1;
+	pcb->datos = dictionary_create(NULL);
+	pcb->d_funciones = dictionary_create(NULL);
+	pcb->d_etiquetas = dictionary_create(NULL);
+	char* separador = "\n";
+	pcb->codigo = string_split(programa, separador);
+	int i = 0;
+	//primer recorrido para cargar estructuras del PCB
+	//ID, PC, DATOS, STACK, CODIGO -- DICCIONARIO DE FUNCIONES, DICCIONARIO DE ETIQUETAS
+	while (pcb->codigo[i] != NULL) {
+		string_trim(&pcb->codigo[i]);
+		if (!es_un_comentario(pcb->codigo[i])) {
+			char * separador_palabras = " ";
+			char ** palabra = string_split(pcb->codigo[i], separador_palabras);
+			if (string_equals_ignore_case(palabra[0], "variables")) {
+				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
+			} else if (string_equals_ignore_case(palabra[0],
+					"comienzo_programa")) {
+				pcb->program_counter = i + 1;
+			} else if (string_equals_ignore_case(palabra[0],
+					"comienzo_funcion")) {
+				cargar_funciones_en_diccionario(pcb->d_funciones, palabra[1],
+						(void *) i);
+			} else if ((index(palabra[0], ':')) != NULL) {
+				cargar_etiquetas_en_diccionario(pcb->d_etiquetas, palabra[0],
+						(void *) i);
+			}
+		}
+		i++;
+	}
+}
+
+int es_un_comentario(char * linea) {
+	return linea[0] == '#';
+}
+
+void cargar_variables_en_diccionario(t_dictionary * diccionario,
+		char * string_variables) {
+	char * separador_variables = ",";
+	char ** variable = string_split(string_variables, separador_variables);
+	int i;
+	for (i = 0; variable[i] != NULL; i++) {
+		dictionary_put(diccionario, strdup(variable[i]), NULL);
+	}
+}
+
+void cargar_funciones_en_diccionario(t_dictionary * diccionario,
+									char * nombre_funcion, void * nro_linea) {
+	char * parentesis = "()";
+	string_append(&nombre_funcion, parentesis);
+	dictionary_put(diccionario, strdup(nombre_funcion), nro_linea);
+}
+
+void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
+		char * nombre_etiqueta, void * nro_linea) {
+	dictionary_put(diccionario, strdup(nombre_etiqueta), nro_linea);
+}
+
+/*
+ * Aca se van a cargar/modificar los valores de las variables, el stack, etc.
+ */
+// todo: ponerle las condiciones en el while
+void procesar(t_pcb * pcb) {
+	while(ejecutarInstruccion(pcb));
+}
+
+void eliminar_estructuras(t_pcb * pcb) {
+	dictionary_destroy(pcb->datos);
+	dictionary_destroy(pcb->d_funciones);
+	dictionary_destroy(pcb->d_etiquetas);
+	free(pcb);
+}
+
+uint32_t ejecutarInstruccion(t_pcb * pcb) {
+	uint32_t valor_ejecucion = 1;
+	posicionarse_proxima_instruccion_ejecutable(pcb);
+	uint32_t pc = pcb->program_counter;
+	char * instruccion = calloc(1,strlen(pcb->codigo[pc]) + 1);
+	strncpy(instruccion,pcb->codigo[pc],strlen(pcb->codigo[pc]));
+	string_trim(&instruccion);
+	if (string_equals_ignore_case(instruccion, "fin_programa")) {
+		valor_ejecucion = 0;
+	} else if (es_funcion(pcb, instruccion)) {
+		t_registro_stack registro_stack;
+		registro_stack.nombre_funcion = calloc(1,strlen(instruccion) + 1);
+		registro_stack.retorno=pc;
+		strncpy(registro_stack.nombre_funcion,instruccion,strlen(instruccion));
+		pila_push(&pcb->stack,registro_stack);
+		pcb->program_counter = (uint32_t)dictionary_get(pcb->d_funciones,instruccion);
+	} else if(string_starts_with(instruccion,"fin_funcion")){
+		t_registro_stack registro_stack = pila_pop(&pcb->stack);
+		pcb->program_counter = registro_stack.retorno;
+		free(registro_stack.nombre_funcion);
+	} else {
+/*
+ * 1. Si la instruccion tiene un '=' es una asignacion
+ * 	1.a Si la instruccion tiene un ';' cambia su tiempo de ejecucion al indicado
+ * 2. Sino es una instruccion del tipo "io()", "imprimir var" o "snc/ssc var etiqueta"
+ * 	Estas últimas no pueden llevar ;
+ */
+		// todo: rompe cuando es una asignación simple con número negativo	(ej.  a=-5)
+		// todo: usar tiempo_ejecucion para cuando consuma el quantum
+		if(index(instruccion,'=') != NULL){
+			char ** palabra = string_split(instruccion,"=");
+			char * valor_l = palabra[0];
+			char * sentencia = palabra[1];
+//			char * tiempo_ejecucion = "NULL";
+			if(index(instruccion,';') != NULL){
+				char ** derecha_asignacion = string_split(palabra[1],";");
+//				tiempo_ejecucion = derecha_asignacion[1];
+				sentencia = derecha_asignacion[0];
+			}
+			char * separador = "";
+			// Entra acá si es una operación con 2 operandos (ej: a=b+1)
+			if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
+				if(string_starts_with(sentencia,"-")){
+					char * sentencia_sin_signo_inicio = calloc(1,strlen(sentencia));
+					strncpy(sentencia_sin_signo_inicio,&sentencia[1],strlen(sentencia) - 1);
+					if((index(sentencia_sin_signo_inicio,'+') != NULL) || (index(sentencia_sin_signo_inicio,'-') != NULL)){
+						// Entra acá si la operación es del tipo a=-1[+/-]b
+// todo: Encapsular en función, igual comportamiento
+						separador = (index(sentencia_sin_signo_inicio,'+') != NULL) ? "+" : "-";
+						long int valor_variable_0;
+						long int valor_variable_1;
+						char ** variable = string_split(sentencia_sin_signo_inicio,separador);
+						if(dictionary_has_key(pcb->datos,variable[0])){
+							valor_variable_0 = (long int)dictionary_get(pcb->datos,variable[0]);
+						} else {
+							valor_variable_0 = strtol(variable[0],NULL,0);
+						}
+						if(dictionary_has_key(pcb->datos,variable[1])){
+							valor_variable_1 = (long int)dictionary_get(pcb->datos,variable[1]);
+						} else {
+							valor_variable_1 = strtol(variable[1],NULL,0);
+						}
+						long int resultado_operacion = (string_equals_ignore_case(separador,"+")) ?
+								(valor_variable_0 * -1) + valor_variable_1 :
+								(valor_variable_0 * -1) - valor_variable_1;
+						dictionary_remove(pcb->datos,valor_l);
+						dictionary_put(pcb->datos,strdup(valor_l),(void *)resultado_operacion);
+//=====================================================================================================
+					} else {
+						long int valor = strtol(sentencia,NULL,0);
+						dictionary_remove(pcb->datos,valor_l);
+						dictionary_put(pcb->datos,strdup(valor_l),(void *)valor);
+					}
+					free(sentencia_sin_signo_inicio);
+				} else {
+// todo: Encapsular en función, igual comportamiento
+					separador = (index(sentencia,'+') != NULL) ? "+" : "-";
+					long int valor_variable_0;
+					long int valor_variable_1;
+					char ** variable = string_split(sentencia,separador);
+					if(dictionary_has_key(pcb->datos,variable[0])){
+						valor_variable_0 = (long int)dictionary_get(pcb->datos,variable[0]);
+					} else {
+						valor_variable_0 = strtol(variable[0],NULL,0);
+					}
+					if(dictionary_has_key(pcb->datos,variable[1])){
+						valor_variable_1 = (long int)dictionary_get(pcb->datos,variable[1]);
+					} else {
+						valor_variable_1 = strtol(variable[1],NULL,0);
+					}
+					long int resultado_operacion = (string_equals_ignore_case(separador,"+")) ?
+							valor_variable_0 + valor_variable_1 :
+							valor_variable_0 - valor_variable_1;
+					dictionary_remove(pcb->datos,valor_l);
+					dictionary_put(pcb->datos,strdup(valor_l),(void *)resultado_operacion);
+//=====================================================================================================
+				}
+			} else if(dictionary_has_key(pcb->datos,sentencia)){
+//	La sentencía es de una variable (ej: a=b)
+				long int valor_variable = (long int)dictionary_get(pcb->datos,sentencia);
+				dictionary_remove(pcb->datos,valor_l);
+				dictionary_put(pcb->datos,strdup(valor_l),(void *)valor_variable);
+			} else if(string_starts_with(sentencia,"io")){
+				printf("es una io");
+				// Encapsular en una función para rehusar
+//				char ** sentencia_io_spliteado = string_split(sentencia,",");
+//				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
+//				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
+				// pasar los parámetros para la función	io;
+			} else {
+//  La sentencia es de una asignación simple de entero (ej. a=1)
+				long int valor = strtol(sentencia,NULL,0);
+				dictionary_remove(pcb->datos,valor_l);
+				dictionary_put(pcb->datos,strdup(valor_l),(void *)valor);
+			}
+		} else {
+			char ** palabra = string_split(instruccion," ");
+			if(string_equals_ignore_case(palabra[0],"imprimir")){
+				/*
+				 * La sentencia es del tipo		imprimir variable
+				 * palabra[0] = imprimir
+				 * palabra[1] = variable
+				 */
+				uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos,palabra[1]);
+				imprimir(palabra[1],valor_variable);
+			} else if(string_equals_ignore_case(palabra[0],"ssc")){
+				/*
+				 * La sentencia es del tipo		ssc variable etiqueta
+				 */
+				uint32_t valor_variable = (uint32_t)dictionary_get(pcb->datos,palabra[1]);
+				if(valor_variable == 0){
+					string_append(&palabra[2],":");
+					uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
+					pcb->program_counter = dir_etiqueta;
+				}
+			} else {
+				/*
+				 * La sentencia es del tipo		snc variable etiqueta
+				 */
+				long int valor_variable = (long int)dictionary_get(pcb->datos,palabra[1]);
+				if(valor_variable != 0){
+					string_append(&palabra[2],":");
+					uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
+					pcb->program_counter = dir_etiqueta;
+				}
+			}
+			free(palabra);
+		}
+	}
+	free(instruccion);
+	(pcb->program_counter)++;
+	return valor_ejecucion;
+}
+
+int es_funcion(t_pcb * pcb, char * instruccion) {
+	return dictionary_has_key(pcb->d_funciones, instruccion);
+}
+
+int es_etiqueta(t_pcb * pcb, char * instruccion) {
+	return dictionary_has_key(pcb->d_etiquetas, instruccion);
+}
+
+/*
+ * Salta instrucciones hasta encontrar una que no sea ni un comentario, ni una etiqueta
+ */
+void posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
+	while(es_un_comentario(pcb->codigo[pcb->program_counter])
+			|| es_etiqueta(pcb,pcb->codigo[pcb->program_counter]))
+		(pcb->program_counter)++;
+}
+
+void imprimir(char * variable, uint32_t valor){
+	printf("IMPRIMIENDO VARIABLE %s: %d\n",variable,valor);
+}
