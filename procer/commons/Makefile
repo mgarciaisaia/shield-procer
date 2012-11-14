@@ -19,13 +19,13 @@ OBJS =  ./build/commons/bitarray.o \
 	./build/commons/collections/list.o \
 	./build/commons/collections/queue.o
 
-all: build/libcommons-library.so
+all: build/libcommons.so
 
 create-dirs:
 	mkdir -p build/commons/collections
 
-build/libcommons-library.so: create-dirs $(OBJS)
-	gcc -shared -o "build/libcommons-library.so" $(OBJS)
+build/libcommons.so: create-dirs $(OBJS)
+	gcc -shared -o "build/libcommons.so" $(OBJS)
 
 build/commons/%.o: ../commons/%.c
 	gcc -O0 -g3 -Wall -c -fmessage-length=0 -fPIC -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"

@@ -8,7 +8,7 @@ dependents:
 	-cd ../commons/ && make all
 
 build/pi: dependents create-dirs $(OBJS)
-	gcc -o "build/pi" $(OBJS)
+	gcc -L"../commons" -L"../commons/build" -o "build/pi" $(OBJS) -lcommons
 
 create-dirs:
 	mkdir -p build
