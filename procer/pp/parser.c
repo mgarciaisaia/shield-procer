@@ -7,8 +7,6 @@
  Description : Hello World in C, Ansi-style
  ============================================================================
  */
-// todo: PROBAR UNA SALTO A UNA ETIQUETA SIMPLE!!!!!!!!!!!!!1
-// CREO QUE VA BORRANDO LÍNEAS DE pcb->codigo TENGO QUE HACER UN COPY PARA TRABAJARLAS
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +15,7 @@
 #include "collections/dictionary.h"
 #include <string.h>
 #include "collections/pila.h"
+#include "collections/list.h"
 
 int main(void) {
 
@@ -40,6 +39,7 @@ int main(void) {
  * ya tenga las referencias
  */
 void cargar_estructuras(char* programa, t_pcb * pcb) {
+	// todo: cargar pcb->factor_ajuste y inicializar/asignar pcb->valor_estimacion_anterior
 	pcb->id_proceso = 1;
 	pcb->datos = dictionary_create(NULL);
 	pcb->d_funciones = dictionary_create(NULL);
@@ -101,9 +101,11 @@ void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
 /*
  * Aca se van a cargar/modificar los valores de las variables, el stack, etc.
  */
-// todo: ponerle las condiciones en el while
+// todo: ponerle las condiciones que corresponden al while
 void procesar(t_pcb * pcb) {
+	pcb->ultima_rafaga = 0;
 	while(ejecutarInstruccion(pcb));
+	printf("lineas ejecutadas por el proceso: %d\n",pcb->ultima_rafaga);
 }
 
 void eliminar_estructuras(t_pcb * pcb) {
@@ -140,19 +142,19 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
  * 2. Sino es una instruccion del tipo "io()", "imprimir var" o "snc/ssc var etiqueta"
  * 	Estas últimas no pueden llevar ;
  */
-		// todo: rompe cuando es una asignación simple con número negativo	(ej.  a=-5)
 		// todo: usar tiempo_ejecucion para cuando consuma el quantum
 		if(index(instruccion,'=') != NULL){
+			(pcb->ultima_rafaga)++;
 			char ** palabra = string_split(instruccion,"=");
 			char * valor_l = palabra[0];
 			char * sentencia = palabra[1];
 //			char * tiempo_ejecucion = "NULL";
-			if(index(instruccion,';') != NULL){
+ 			if(index(instruccion,';') != NULL){
 				char ** derecha_asignacion = string_split(palabra[1],";");
 //				tiempo_ejecucion = derecha_asignacion[1];
 				sentencia = derecha_asignacion[0];
 			}
-			char * separador = "";
+                            			char * separador = "";
 			// Entra acá si es una operación con 2 operandos (ej: a=b+1)
 			if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
 				if(string_starts_with(sentencia,"-")){
@@ -216,6 +218,7 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
 				dictionary_remove(pcb->datos,valor_l);
 				dictionary_put(pcb->datos,strdup(valor_l),(void *)valor_variable);
 			} else if(string_starts_with(sentencia,"io")){
+// todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
 				printf("es una io");
 				// Encapsular en una función para rehusar
 //				char ** sentencia_io_spliteado = string_split(sentencia,",");
@@ -236,6 +239,7 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
 				 * palabra[0] = imprimir
 				 * palabra[1] = variable
 				 */
+				(pcb->ultima_rafaga)++;
 				uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos,palabra[1]);
 				imprimir(palabra[1],valor_variable);
 			} else if(string_equals_ignore_case(palabra[0],"ssc")){
@@ -286,4 +290,62 @@ void posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 
 void imprimir(char * variable, uint32_t valor){
 	printf("IMPRIMIENDO VARIABLE %s: %d\n",variable,valor);
+}
+
+//================================================================================
+//= FUNCIONES PARA PEDIR ELEMENTOS DE LA PILA DE ACUERDO AL TIPO DE ORDENAMIENTO =
+//================================================================================
+
+t_reg_prueba * dame_elemento_mas_antiguo(t_list * lista){
+	t_reg_prueba * reg_prueba_mas_antigua = list_get(lista,0);
+	int i;
+	int indice_reg_mas_antigua;
+	for(i = 0,indice_reg_mas_antigua = 0;i < list_size(lista);i++){
+		t_reg_prueba * reg_prueba = list_get(lista,i);
+		if(reg_prueba_mas_antigua->tiempo_entrada_listos > reg_prueba->tiempo_entrada_listos){
+			reg_prueba_mas_antigua = reg_prueba;
+			indice_reg_mas_antigua = i;
+		}
+	}
+	return list_remove(lista,indice_reg_mas_antigua);
+}
+
+t_reg_prueba * dame_elemento_mayor_prioridad(t_list * lista){
+	t_reg_prueba * reg_prueba_mayor_prioridad = list_get(lista,0);
+	int i;
+	int indice_reg_mas_antigua;
+	for(i = 0,indice_reg_mas_antigua = 0;i < list_size(lista);i++){
+		t_reg_prueba * reg_prueba = list_get(lista,i);
+		if(reg_prueba_mayor_prioridad->prioridad < reg_prueba->prioridad){
+			reg_prueba_mayor_prioridad = reg_prueba;
+			indice_reg_mas_antigua = i;
+		}
+	}
+	return list_remove(lista,indice_reg_mas_antigua);
+}
+
+t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list * lista){
+	t_reg_prueba * reg_prueba_rafaga_mas_corta = list_get(lista,0);
+	int i;
+	int indice_reg_rafaga_mas_corta;
+	double estimacion_rafaga_reg_rafaga_mas_corta = calcular_rafaga(reg_prueba_rafaga_mas_corta->pcb->factor_ajuste,
+												reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior,
+												reg_prueba_rafaga_mas_corta->pcb->ultima_rafaga);
+	for(i = 0,indice_reg_rafaga_mas_corta = 0;i < list_size(lista);i++){
+		t_reg_prueba * reg_prueba = list_get(lista,i);
+		double estimacion_rafaga = calcular_rafaga(reg_prueba->pcb->factor_ajuste,
+													reg_prueba->pcb->valor_estimacion_anterior,
+													reg_prueba->pcb->ultima_rafaga);
+		if(estimacion_rafaga_reg_rafaga_mas_corta > estimacion_rafaga){
+			estimacion_rafaga_reg_rafaga_mas_corta = estimacion_rafaga;
+			reg_prueba_rafaga_mas_corta = reg_prueba;
+			reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior = estimacion_rafaga;
+			indice_reg_rafaga_mas_corta = i;
+		}
+	}
+	return list_remove(lista,indice_reg_rafaga_mas_corta);
+}
+
+double calcular_rafaga(double factor_ajuste,double valor_estimacion_anterior,double ultima_rafaga){
+	return factor_ajuste * ultima_rafaga + (1 - factor_ajuste) * valor_estimacion_anterior;
 }
