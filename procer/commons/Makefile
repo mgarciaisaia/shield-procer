@@ -6,7 +6,8 @@ C_SRCS = ./commons/bitarray.c \
 	 ./commons/temporal.c \
 	 ./commons/collections/dictionary.c \
 	 ./commons/collections/list.c \
-	 ./commons/collections/queue.c
+	 ./commons/collections/queue.c \
+	 ./commons/collections/pila.c
 
 
 OBJS =  ./build/commons/bitarray.o \
@@ -17,7 +18,8 @@ OBJS =  ./build/commons/bitarray.o \
 	./build/commons/temporal.o \
 	./build/commons/collections/dictionary.o \
 	./build/commons/collections/list.o \
-	./build/commons/collections/queue.o
+	./build/commons/collections/queue.o \
+	./build/commons/collections/pila.o
 
 all: build/libcommons.so
 

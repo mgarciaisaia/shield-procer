@@ -13,6 +13,9 @@ build/pi: dependents create-dirs $(OBJS)
 create-dirs:
 	mkdir -p build
 
+clean-all: clean
+	        -cd ../commons/ && make clean
+
 clean:
 	rm -rf build
 
