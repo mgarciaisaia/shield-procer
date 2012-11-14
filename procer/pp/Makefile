@@ -20,7 +20,7 @@ clean:
 	rm -rf build
 
 %.o: ../%.c
-	gcc -I"../commons" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	gcc -I"../" -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
 
 # PHONY targets son los que no producen un archivo llamado como el target
 # Se los marca para evitar confusion si se crea un archivo llamado asi

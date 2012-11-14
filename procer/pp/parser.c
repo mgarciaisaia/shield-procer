@@ -10,12 +10,12 @@
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include "temporal.h"
-#include "string.h"
-#include "collections/dictionary.h"
-#include <strings.h>
-#include "collections/pila.h"
-#include "collections/list.h"
+#include "commons/temporal.h"
+#include "commons/string.h"
+#include "commons/collections/dictionary.h"
+#include <string.h>
+#include "commons/collections/pila.h"
+#include "commons/collections/list.h"
 
 int main(void) {
 

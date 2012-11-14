@@ -5,10 +5,10 @@
  *      Author: utnso
  */
 
-#include "collections/dictionary.h"
+#include "commons/collections/dictionary.h"
 #include <stdint.h>
-#include "collections/pila.h"
-#include "collections/list.h"
+#include "commons/collections/pila.h"
+#include "commons/collections/list.h"
 
 typedef struct {
 	uint32_t id_proceso;
