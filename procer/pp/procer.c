@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "commons/collections/list.h"
 #include "parser.h"
+#include <unistd.h>
 
 t_pcb *sacar_proceso_listo();
 int agregar_proceso_listo(t_pcb *);
@@ -32,7 +33,6 @@ void *producirSiempre() {
     while(1) {
         t_pcb *pcb = malloc(sizeof(t_pcb));
         agregar_proceso_listo(pcb);
-        printf("Agregué un proceso listo\n");
     }
     return 0;
 }
@@ -41,7 +41,6 @@ void *consumirSiempre() {
     while(1) {
         t_pcb *pcb = sacar_proceso_listo();
         free(pcb);
-        printf("Saqué un proceso listo\n");
     }
     return 0;
 }
@@ -59,6 +58,10 @@ int procer() {
 
 t_pcb *sacar_proceso_listo() {
     sem_wait(&semaforo_procesos_listos);
+    int *numero = malloc(sizeof(int));
+    sem_getvalue(&semaforo_procesos_listos, numero);
+    printf("%d\t-1\n", *numero);
+    free(numero);
     pthread_rwlock_wrlock(&lock_procesos_listos);
     t_pcb *pcb = list_remove(lista_listos, 0);
     pthread_rwlock_unlock(&lock_procesos_listos);
@@ -66,8 +69,13 @@ t_pcb *sacar_proceso_listo() {
 }
 
 int agregar_proceso_listo(t_pcb *pcb) {
+    usleep(500);
     pthread_rwlock_wrlock(&lock_procesos_listos);
     list_add(lista_listos, pcb);
+    int *numero = malloc(sizeof(int));
+    sem_getvalue(&semaforo_procesos_listos, numero);
+    printf("%d\t1\n", *numero);
+    free(numero);
     sem_post(&semaforo_procesos_listos);
     pthread_rwlock_unlock(&lock_procesos_listos);
     return 0;

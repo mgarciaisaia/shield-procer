@@ -1,6 +1,8 @@
-C_SRCS = ./parser.c
+C_SRCS = ./parser.c \
+	 ./procer.c
 
-OBJS = ./build/parser.o
+OBJS = ./build/parser.o \
+       ./build/procer.o
 
 all: build/parser
 
@@ -8,7 +10,7 @@ dependents:
 	-cd ../commons/ && make all
 
 build/parser: dependents create-dirs $(OBJS)
-	gcc -L"../commons" -L"../commons/build" -o "build/parser" $(OBJS) -lcommons
+	gcc -L"../commons" -L"../commons/build" -o "build/parser" $(OBJS) -lcommons -pthread
 
 create-dirs:
 	mkdir -p build
