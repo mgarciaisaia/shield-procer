@@ -1,6 +1,6 @@
 # Default target
 help :
-	@echo "What do you want from me?"
+	@echo "♫ What do you want from me? ♫"
 
 script = shield.sh
 rutaScript = $(destino)/$(script)
@@ -57,6 +57,7 @@ desinstalar : esRoot estaInstalado nadieConfigurado
 	@rm $(enlaceScript) 
 
 configurar : esRoot usuarioIngresado
+	@./utils/copiarClaveSsh.sh $(enlaceScript) $(usuario)
 	@mkdir ~$(usuario)/.shield # Si tenia configurado, rompe
 	@cp -r configuraciones/ ~$(usuario)/.shield/conf
 	@# Archivo de log de errores de la shell (**NO** es auditoria)
