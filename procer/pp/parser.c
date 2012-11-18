@@ -1,7 +1,7 @@
 /*
  ============================================================================
  Name        : Parser.c
- Author      : 
+ Author      :
  Version     :
  Copyright   : Your copyright notice
  Description : Hello World in C, Ansi-style
@@ -13,7 +13,7 @@
 #include "temporal.h"
 #include "string.h"
 #include "collections/dictionary.h"
-#include <string.h>
+#include <strings.h>
 #include "collections/pila.h"
 #include "collections/list.h"
 
@@ -21,6 +21,7 @@ int main(void) {
 
 	t_pcb * pcb = malloc(sizeof(t_pcb));
 	char * programa =
+//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\nfin_programa\n";
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\na=-3+a\nimprimir a\nfin_programa\n";
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\n\ta=-1\n\tf1()\n\timprimir a\nfin_programa\ncomienzo_funcion f1\n\ta=-3-a\n\tf2()\nfin_funcion f1\ncomienzo_funcion f2\n\ta=a-0\nfin_funcion";
 //			"#!/home/utnso/pi\n# Comentario\nvariables i\ncomienzo_programa\n\ta=4\n\ti=3\n\tinicio_for:\n\ti=i-1\n\ta=a+2\n\tsnc i inicio_for\n\timprimir i\n\timprimir a\nfin_programa";
@@ -122,149 +123,20 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
 	char * instruccion = calloc(1,strlen(pcb->codigo[pc]) + 1);
 	strncpy(instruccion,pcb->codigo[pc],strlen(pcb->codigo[pc]));
 	string_trim(&instruccion);
-	if (string_equals_ignore_case(instruccion, "fin_programa")) {
+	if (es_fin_programa(instruccion)) {
 		valor_ejecucion = 0;
 	} else if (es_funcion(pcb, instruccion)) {
-		t_registro_stack registro_stack;
-		registro_stack.nombre_funcion = calloc(1,strlen(instruccion) + 1);
-		registro_stack.retorno=pc;
-		strncpy(registro_stack.nombre_funcion,instruccion,strlen(instruccion));
-		pila_push(&pcb->stack,registro_stack);
-		pcb->program_counter = (uint32_t)dictionary_get(pcb->d_funciones,instruccion);
-	} else if(string_starts_with(instruccion,"fin_funcion")){
-		t_registro_stack registro_stack = pila_pop(&pcb->stack);
-		pcb->program_counter = registro_stack.retorno;
-		free(registro_stack.nombre_funcion);
-	} else {
-/*
- * 1. Si la instruccion tiene un '=' es una asignacion
- * 	1.a Si la instruccion tiene un ';' cambia su tiempo de ejecucion al indicado
- * 2. Sino es una instruccion del tipo "io()", "imprimir var" o "snc/ssc var etiqueta"
- * 	Estas últimas no pueden llevar ;
- */
-		// todo: usar tiempo_ejecucion para cuando consuma el quantum
-		if(index(instruccion,'=') != NULL){
-			(pcb->ultima_rafaga)++;
-			char ** palabra = string_split(instruccion,"=");
-			char * valor_l = palabra[0];
-			char * sentencia = palabra[1];
-//			char * tiempo_ejecucion = "NULL";
- 			if(index(instruccion,';') != NULL){
-				char ** derecha_asignacion = string_split(palabra[1],";");
-//				tiempo_ejecucion = derecha_asignacion[1];
-				sentencia = derecha_asignacion[0];
-			}
-                            			char * separador = "";
-			// Entra acá si es una operación con 2 operandos (ej: a=b+1)
-			if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
-				if(string_starts_with(sentencia,"-")){
-					char * sentencia_sin_signo_inicio = calloc(1,strlen(sentencia));
-					strncpy(sentencia_sin_signo_inicio,&sentencia[1],strlen(sentencia) - 1);
-					if((index(sentencia_sin_signo_inicio,'+') != NULL) || (index(sentencia_sin_signo_inicio,'-') != NULL)){
-						// Entra acá si la operación es del tipo a=-1[+/-]b
-// todo: Encapsular en función, igual comportamiento
-						separador = (index(sentencia_sin_signo_inicio,'+') != NULL) ? "+" : "-";
-						long int valor_variable_0;
-						long int valor_variable_1;
-						char ** variable = string_split(sentencia_sin_signo_inicio,separador);
-						if(dictionary_has_key(pcb->datos,variable[0])){
-							valor_variable_0 = (long int)dictionary_get(pcb->datos,variable[0]);
-						} else {
-							valor_variable_0 = strtol(variable[0],NULL,0);
-						}
-						if(dictionary_has_key(pcb->datos,variable[1])){
-							valor_variable_1 = (long int)dictionary_get(pcb->datos,variable[1]);
-						} else {
-							valor_variable_1 = strtol(variable[1],NULL,0);
-						}
-						long int resultado_operacion = (string_equals_ignore_case(separador,"+")) ?
-								(valor_variable_0 * -1) + valor_variable_1 :
-								(valor_variable_0 * -1) - valor_variable_1;
-						dictionary_remove(pcb->datos,valor_l);
-						dictionary_put(pcb->datos,strdup(valor_l),(void *)resultado_operacion);
-//=====================================================================================================
-					} else {
-						long int valor = strtol(sentencia,NULL,0);
-						dictionary_remove(pcb->datos,valor_l);
-						dictionary_put(pcb->datos,strdup(valor_l),(void *)valor);
-					}
-					free(sentencia_sin_signo_inicio);
-				} else {
-// todo: Encapsular en función, igual comportamiento
-					separador = (index(sentencia,'+') != NULL) ? "+" : "-";
-					long int valor_variable_0;
-					long int valor_variable_1;
-					char ** variable = string_split(sentencia,separador);
-					if(dictionary_has_key(pcb->datos,variable[0])){
-						valor_variable_0 = (long int)dictionary_get(pcb->datos,variable[0]);
-					} else {
-						valor_variable_0 = strtol(variable[0],NULL,0);
-					}
-					if(dictionary_has_key(pcb->datos,variable[1])){
-						valor_variable_1 = (long int)dictionary_get(pcb->datos,variable[1]);
-					} else {
-						valor_variable_1 = strtol(variable[1],NULL,0);
-					}
-					long int resultado_operacion = (string_equals_ignore_case(separador,"+")) ?
-							valor_variable_0 + valor_variable_1 :
-							valor_variable_0 - valor_variable_1;
-					dictionary_remove(pcb->datos,valor_l);
-					dictionary_put(pcb->datos,strdup(valor_l),(void *)resultado_operacion);
-//=====================================================================================================
-				}
-			} else if(dictionary_has_key(pcb->datos,sentencia)){
-//	La sentencía es de una variable (ej: a=b)
-				long int valor_variable = (long int)dictionary_get(pcb->datos,sentencia);
-				dictionary_remove(pcb->datos,valor_l);
-				dictionary_put(pcb->datos,strdup(valor_l),(void *)valor_variable);
-			} else if(string_starts_with(sentencia,"io")){
-// todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
-				printf("es una io");
-				// Encapsular en una función para rehusar
-//				char ** sentencia_io_spliteado = string_split(sentencia,",");
-//				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
-//				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
-				// pasar los parámetros para la función	io;
-			} else {
-//  La sentencia es de una asignación simple de entero (ej. a=1)
-				long int valor = strtol(sentencia,NULL,0);
-				dictionary_remove(pcb->datos,valor_l);
-				dictionary_put(pcb->datos,strdup(valor_l),(void *)valor);
-			}
-		} else {
-			char ** palabra = string_split(instruccion," ");
-			if(string_equals_ignore_case(palabra[0],"imprimir")){
-				/*
-				 * La sentencia es del tipo		imprimir variable
-				 * palabra[0] = imprimir
-				 * palabra[1] = variable
-				 */
-				(pcb->ultima_rafaga)++;
-				uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos,palabra[1]);
-				imprimir(palabra[1],valor_variable);
-			} else if(string_equals_ignore_case(palabra[0],"ssc")){
-				/*
-				 * La sentencia es del tipo		ssc variable etiqueta
-				 */
-				uint32_t valor_variable = (uint32_t)dictionary_get(pcb->datos,palabra[1]);
-				if(valor_variable == 0){
-					string_append(&palabra[2],":");
-					uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
-					pcb->program_counter = dir_etiqueta;
-				}
-			} else {
-				/*
-				 * La sentencia es del tipo		snc variable etiqueta
-				 */
-				long int valor_variable = (long int)dictionary_get(pcb->datos,palabra[1]);
-				if(valor_variable != 0){
-					string_append(&palabra[2],":");
-					uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
-					pcb->program_counter = dir_etiqueta;
-				}
-			}
-			free(palabra);
-		}
+		procesar_funcion(pcb,instruccion);
+	} else if(es_fin_funcion(instruccion)){
+		procesar_fin_funcion(pcb,instruccion);
+	} else if(es_funcion_imprimir(instruccion)){
+		procesar_funcion_imprimir(pcb,instruccion);
+	} else if(es_un_salto(instruccion)){
+		procesar_salto(pcb,instruccion);
+	} else if(es_funcion_io(instruccion)){
+		printf("es una función io");
+	} else if(es_asignacion(instruccion)){
+		procesar_asignacion(pcb,instruccion);
 	}
 	free(instruccion);
 	(pcb->program_counter)++;
@@ -277,6 +149,123 @@ int es_funcion(t_pcb * pcb, char * instruccion) {
 
 int es_etiqueta(t_pcb * pcb, char * instruccion) {
 	return dictionary_has_key(pcb->d_etiquetas, instruccion);
+}
+
+int es_fin_programa(char * instruccion){
+	return string_equals_ignore_case(instruccion, "fin_programa");
+}
+
+int es_fin_funcion(char * instruccion){
+	return string_starts_with(instruccion,"fin_funcion");
+}
+
+int es_asignacion(char * instruccion){
+	return index(instruccion,'=') != NULL;
+}
+
+int es_funcion_io(char * instruccion){
+	return string_starts_with(instruccion,"io");
+}
+
+int es_funcion_imprimir(char * instruccion){
+	return string_starts_with(instruccion,"imprimir");
+}
+
+int es_un_salto(char * instruccion){
+	return string_starts_with(instruccion,"ssc") || string_starts_with(instruccion,"snc");
+}
+
+void procesar_funcion(t_pcb * pcb, char * instruccion){
+	t_registro_stack registro_stack;
+	registro_stack.nombre_funcion = calloc(1,strlen(instruccion) + 1);
+	registro_stack.retorno=pcb->program_counter;
+	strncpy(registro_stack.nombre_funcion,instruccion,strlen(instruccion));
+	pila_push(&pcb->stack,registro_stack);
+	pcb->program_counter = (uint32_t)dictionary_get(pcb->d_funciones,instruccion);
+}
+
+void procesar_fin_funcion(t_pcb * pcb,char * instruccion){
+	t_registro_stack registro_stack = pila_pop(&pcb->stack);
+	pcb->program_counter = registro_stack.retorno;
+	free(registro_stack.nombre_funcion);
+}
+
+void procesar_funcion_imprimir(t_pcb * pcb,char * instruccion){
+	char ** palabra = string_split(instruccion," ");
+	(pcb->ultima_rafaga)++;
+	uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos,palabra[1]);
+	imprimir(palabra[1],valor_variable);
+}
+
+void procesar_salto(t_pcb * pcb, char * instruccion){
+	char ** palabra = string_split(instruccion," ");
+	uint32_t valor_variable = (uint32_t)dictionary_get(pcb->datos,palabra[1]);
+	if(string_equals_ignore_case(palabra[0],"ssc")){
+		if(valor_variable == 0){
+			string_append(&palabra[2],":");
+			uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
+			pcb->program_counter = dir_etiqueta;
+		}
+	} else {
+		if(valor_variable != 0){
+			string_append(&palabra[2],":");
+			uint32_t dir_etiqueta = (uint32_t)dictionary_get(pcb->d_etiquetas,palabra[2]);
+			pcb->program_counter = dir_etiqueta;
+		}
+	}
+}
+
+void procesar_asignacion(t_pcb * pcb, char * instruccion){
+	// todo: usar tiempo_ejecucion para cuando consuma el quantum
+		(pcb->ultima_rafaga)++;
+		char ** palabra = string_split(instruccion,"=");
+		char * valor_l = palabra[0];
+		char * sentencia = palabra[1];
+//			char * tiempo_ejecucion = "NULL";
+		if(index(instruccion,';') != NULL){
+			char ** derecha_asignacion = string_split(palabra[1],";");
+//				tiempo_ejecucion = derecha_asignacion[1];
+			sentencia = derecha_asignacion[0];
+		}
+		int32_t operando = 1;
+		if(string_starts_with(sentencia,"-")){
+			operando = -1;
+			sentencia = &sentencia[1];
+		}
+		if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
+			// todo: Encapsular en función, igual comportamiento
+			char * separador = (index(sentencia,'+') != NULL) ? "+" : "-";
+			long int valor_variable_0;
+			long int valor_variable_1;
+			char ** variable = string_split(sentencia,separador);
+			if(dictionary_has_key(pcb->datos,variable[0])){
+				valor_variable_0 = (long int)dictionary_get(pcb->datos,variable[0]);
+			} else {
+				valor_variable_0 = strtol(variable[0],NULL,0);
+			}
+			if(dictionary_has_key(pcb->datos,variable[1])){
+				valor_variable_1 = (long int)dictionary_get(pcb->datos,variable[1]);
+			} else {
+				valor_variable_1 = strtol(variable[1],NULL,0);
+			}
+			long int resultado_operacion = (string_equals_ignore_case(separador,"+")) ?
+					(valor_variable_0 * operando) + valor_variable_1 :
+					(valor_variable_0 * operando) - valor_variable_1;
+			dictionary_remove(pcb->datos,valor_l);
+			dictionary_put(pcb->datos,strdup(valor_l),(void *)resultado_operacion);
+		} else if(es_funcion_io(sentencia)){
+// todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
+			printf("es una io");
+//				char ** sentencia_io_spliteado = string_split(sentencia,",");
+//				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
+//				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
+			// pasar los parámetros para la función	io;
+		} else {
+			//  La sentencia es de una asignación simple de entero (ej. a=1)
+			long int valor = strtol(sentencia,NULL,0) * operando;
+			dictionary_remove(pcb->datos,valor_l);
+			dictionary_put(pcb->datos,strdup(valor_l),(void *)valor);
+		}
 }
 
 /*

@@ -43,8 +43,22 @@ void cargar_etiquetas_en_diccionario(t_dictionary *, char *, void *);
 void procesar(t_pcb * pcb);
 void eliminar_estructuras(t_pcb *);
 uint32_t ejecutarInstruccion(t_pcb *);
+
 int es_funcion(t_pcb *, char *);
+int es_funcion_io(char *);
+int es_fin_funcion(char *);
+int es_fin_programa(char *);
 int es_etiqueta(t_pcb *, char *);
+int es_funcion_imprimir(char *);
+int es_un_salto(char *);
+int es_asignacion(char *);
+
+void procesar_funcion(t_pcb *, char *);
+void procesar_fin_funcion(t_pcb *,char *);
+void procesar_funcion_imprimir(t_pcb *, char *);
+void procesar_salto(t_pcb *, char *);
+void procesar_asinacion(t_pcb *, char *);
+
 void posicionarse_proxima_instruccion_ejecutable(t_pcb *);
 void imprimir(char *, uint32_t);
 
