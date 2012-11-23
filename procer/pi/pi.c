@@ -7,11 +7,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
 #include <arpa/inet.h>
-
-struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port);
+#include "commons/network.h"
 
 #define ERROR_PARAMETROS 1
 #define NO_PP_IP 2
@@ -57,19 +54,13 @@ int main(int argc, char* argv[]) {
 	char buffer[TAMANIO_BUFFER];
 	int bytesLeidos = 0;
 	int bytesEnviados = 0;
-	char *otroBuffer = NULL;
 	
 	while((bytesLeidos = read(script, &buffer, TAMANIO_BUFFER)) > 0) {
-		// TODO: manejar cuando bytesEnviados < bytesLeidos
-		if(bytesEnviados = send(conexion, buffer, bytesLeidos, 0) > 0) {
+		if((bytesEnviados = socket_send(conexion, buffer, bytesLeidos)) > 0) {
 			printf("Envie %d de %d bytes por %d\n", bytesEnviados, bytesLeidos, conexion);
 		}
 		
-		otroBuffer = malloc(bytesLeidos + 1);
-		memcpy(otroBuffer, buffer, bytesLeidos);
-		otroBuffer[bytesLeidos] = '\0';
-		printf("Lei la linea: %s\n", otroBuffer);
-		free(otroBuffer);
+                printf("Lei la linea: %.*s\n", bytesLeidos - 1, buffer + 1);
 	}
 	
 	if(close(script)) {
@@ -79,14 +70,12 @@ int main(int argc, char* argv[]) {
 	
 	char confirmar = 0;
 	char *pedidoReanudar = "1REANUDARPROCESO";
+        char *receiveBuffer = NULL;
 	
-	while((bytesLeidos = recv(conexion, &buffer, TAMANIO_BUFFER, 0)) > 0) {
-		confirmar = buffer[0] == '1';
-		otroBuffer = malloc(bytesLeidos);
-		memcpy(otroBuffer, buffer + 1, bytesLeidos - 1);
-		otroBuffer[bytesLeidos - 1] = '\0';
-		printf("PROCER dice: %s\n", otroBuffer);
-		free(otroBuffer);
+	while((bytesLeidos = socket_receive(conexion, (void**)&receiveBuffer)) > 0) {
+		confirmar = (*receiveBuffer == '1');
+		printf("PROCER dice: %.*s\n", bytesLeidos - 1, receiveBuffer + 1);
+                free(receiveBuffer);
 		
 		if(confirmar) {
 			printf("Proceso suspendido - presione ENTER para reanudar la ejecucion...\n");
@@ -95,19 +84,11 @@ int main(int argc, char* argv[]) {
 			system("stty cbreak -echo");
 			getchar();
 			system("stty cooked echo");
-			send(conexion, pedidoReanudar, strlen(pedidoReanudar) + 1, 0);
+			socket_send(conexion, pedidoReanudar, strlen(pedidoReanudar) + 1);
 			printf("Proceso reanudado\n");
 		}
 	}
 
 	close(conexion);
-}
-
-struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port) {
-    struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
-    memset(address, '\0', sizeof(struct sockaddr_in));
-    address->sin_addr.s_addr = ip;
-    address->sin_family = AF_INET;
-    address->sin_port = htons(port);
-    return address;
+        return EXIT_SUCCESS;
 }

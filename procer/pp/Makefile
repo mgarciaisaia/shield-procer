@@ -1,22 +1,24 @@
-C_SRCS = ./parser.c
+C_SRCS = ./pp.c \
+	 ./parser.c
 
-OBJS = ./build/parser.o
+OBJS = ./build/pp.o \
+       ./build/parser.o
 
-all: build/parser
+all: build/pp
 
 dependents:
 	-cd ../commons/ && make all
 
-build/parser: dependents create-dirs $(OBJS)
-	gcc -L"../commons" -L"../commons/build" -o "build/parser" $(OBJS) -lcommons
+build/pp: dependents create-dirs $(OBJS)
+	gcc -L"../commons/build" -o "build/pp" $(OBJS) -lcommons
 
 create-dirs:
 	mkdir -p build
 
-clean-all: clean
+clean-commons:
 	-cd ../commons/ && make clean
 
-clean:
+clean: clean-commons
 	rm -rf build
 
 %.o: ../%.c
@@ -24,4 +26,4 @@ clean:
 
 # PHONY targets son los que no producen un archivo llamado como el target
 # Se los marca para evitar confusion si se crea un archivo llamado asi
-.PHONY: all dependents create-dirs clean
+.PHONY: all dependents create-dirs clean clean-commons

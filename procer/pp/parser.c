@@ -17,7 +17,7 @@
 #include "commons/collections/pila.h"
 #include "commons/collections/list.h"
 
-int main(void) {
+int main_viejo(void) {
 
 	t_pcb * pcb = malloc(sizeof(t_pcb));
 	char * programa =
