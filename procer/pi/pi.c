@@ -49,6 +49,15 @@ int main(int argc, char* argv[]) {
 		printf("Error %d conectandose a %s:%s: %s\n", errno, direccionPP, puertoPP, strerror(errno));
 		exit(errno);
 	}
+        
+        int *pid = NULL;
+        int bytesRecibidos = socket_receive(conexion, &pid);
+        if(bytesRecibidos <= 0) {
+            perror("Error recibiendo el PID del proceso");
+            exit(errno);
+        }
+        
+        printf("El PID del proceso es %d\n", *pid);
 	
 	#define TAMANIO_BUFFER 1024
 	char buffer[TAMANIO_BUFFER];
