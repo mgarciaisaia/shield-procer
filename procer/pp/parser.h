@@ -11,7 +11,7 @@
 #include "commons/collections/list.h"
 
 typedef struct {
-	uint32_t id_proceso;
+	int id_proceso;
 	uint32_t program_counter;
 	t_dictionary * datos;
 	t_dictionary * d_funciones;
@@ -35,7 +35,8 @@ typedef struct {
 	uint32_t prioridad;
 } t_reg_prueba;
 
-void cargar_estructuras(char * , t_pcb *);
+int ejecutar(char *programa, int socketInterprete);
+t_pcb *crear_pcb(char *programa, int socketInterprete);
 int es_un_comentario(char *);
 void cargar_variables_en_diccionario(t_dictionary *, char *);
 void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);
@@ -57,10 +58,10 @@ void procesar_funcion(t_pcb *, char *);
 void procesar_fin_funcion(t_pcb *,char *);
 void procesar_funcion_imprimir(t_pcb *, char *);
 void procesar_salto(t_pcb *, char *);
-void procesar_asinacion(t_pcb *, char *);
+void procesar_asignacion(t_pcb *, char *);
 
 void posicionarse_proxima_instruccion_ejecutable(t_pcb *);
-void imprimir(char *, uint32_t);
+void imprimir(int pid, char *, uint32_t);
 
 //================================================================================
 //= FUNCIONES PARA PEDIR ELEMENTOS DE LA PILA DE ACUERDO AL TIPO DE ORDENAMIENTO =

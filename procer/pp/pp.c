@@ -4,6 +4,7 @@
 #include "commons/network.h"
 #include <errno.h>
 #include <unistd.h>
+#include "parser.h"
 
 
 #define ERROR_BINDED 1
@@ -35,6 +36,8 @@ int main(void) {
     int inputLenght = socket_receive(querySocket, &input);
     
     printf("Recibido: %.*s\n", inputLenght, (char *)input);
+    
+    ejecutar((char *)input, querySocket);
     
     close(querySocket);
     close(socket);

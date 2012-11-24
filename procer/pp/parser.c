@@ -7,6 +7,7 @@
  Description : Hello World in C, Ansi-style
  ============================================================================
  */
+#define _GNU_SOURCE
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,19 +17,19 @@
 #include <string.h>
 #include "commons/collections/pila.h"
 #include "commons/collections/list.h"
+#include "commons/network.h"
 
-int main_viejo(void) {
+int ejecutar(char *programa, int socketInterprete) {
 
-	t_pcb * pcb = malloc(sizeof(t_pcb));
-	char * programa =
+//	char * programa =
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\nfin_programa\n";
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\na=-3+a\nimprimir a\nfin_programa\n";
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\n\ta=-1\n\tf1()\n\timprimir a\nfin_programa\ncomienzo_funcion f1\n\ta=-3-a\n\tf2()\nfin_funcion f1\ncomienzo_funcion f2\n\ta=a-0\nfin_funcion";
 //			"#!/home/utnso/pi\n# Comentario\nvariables i\ncomienzo_programa\n\ta=4\n\ti=3\n\tinicio_for:\n\ti=i-1\n\ta=a+2\n\tsnc i inicio_for\n\timprimir i\n\timprimir a\nfin_programa";
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables i,b\n\ncomienzo_programa\n\ti=1\n\tinicio_for:\n\ti=i+1\n\timprimir i\n\tb=i-10\n\tsnc b inicio_for\nfin_programa";
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a\n\ncomienzo_programa\n\ta=1\n\ta=a+1\n\ta=a+2\n\timprimir a\nfin_programa";
-			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
-	cargar_estructuras(programa, pcb);
+//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
+	t_pcb * pcb = crear_pcb(programa, socketInterprete);
 	procesar(pcb);
 	eliminar_estructuras(pcb);
 	return EXIT_SUCCESS;
@@ -39,9 +40,10 @@ int main_viejo(void) {
  * Cargo los diccionarios de variables(no se setean acá!!!), funciones y etiquetas, para que al procesar
  * ya tenga las referencias
  */
-void cargar_estructuras(char* programa, t_pcb * pcb) {
+t_pcb *crear_pcb(char* programa, int socketInterprete) {
+	t_pcb *pcb = malloc(sizeof(t_pcb));
 	// todo: cargar pcb->factor_ajuste y inicializar/asignar pcb->valor_estimacion_anterior
-	pcb->id_proceso = 1;
+	pcb->id_proceso = socketInterprete;
 	pcb->datos = dictionary_create(NULL);
 	pcb->d_funciones = dictionary_create(NULL);
 	pcb->d_etiquetas = dictionary_create(NULL);
@@ -71,6 +73,7 @@ void cargar_estructuras(char* programa, t_pcb * pcb) {
 		}
 		i++;
 	}
+        return pcb;
 }
 
 int es_un_comentario(char * linea) {
@@ -194,7 +197,7 @@ void procesar_funcion_imprimir(t_pcb * pcb,char * instruccion){
 	char ** palabra = string_split(instruccion," ");
 	(pcb->ultima_rafaga)++;
 	uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos,palabra[1]);
-	imprimir(palabra[1],valor_variable);
+	imprimir(pcb->id_proceso, palabra[1], valor_variable);
 }
 
 void procesar_salto(t_pcb * pcb, char * instruccion){
@@ -277,8 +280,14 @@ void posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 		(pcb->program_counter)++;
 }
 
-void imprimir(char * variable, uint32_t valor){
-	printf("IMPRIMIENDO VARIABLE %s: %d\n",variable,valor);
+void imprimir(int pid, char * variable, uint32_t valor) {
+    char *mensaje = NULL;
+    // Si el primer caracter del mensaje es '1', se pide confirmacion al usuario
+    // para reanudar un proceso suspendido
+    int longitudMensaje = asprintf(&mensaje, "0IMPRIMIENDO VARIABLE %s: %d", variable, valor);
+    // El + 1 es porque asprintf() devuelve el strlen(); falta el \0 final
+    socket_send(pid, mensaje, longitudMensaje + 1);
+    free(mensaje);
 }
 
 //================================================================================
