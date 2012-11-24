@@ -55,8 +55,8 @@ t_pcb *crear_pcb(char* programa, int socketInterprete) {
 	while (pcb->codigo[i] != NULL) {
 		string_trim(&pcb->codigo[i]);
 		if (!es_un_comentario(pcb->codigo[i])) {
-			char * separador_palabras = " ";
-			char ** palabra = string_split(pcb->codigo[i], separador_palabras);
+			#define SEPARADOR_PALABRAS " "
+			char ** palabra = string_split(pcb->codigo[i], SEPARADOR_PALABRAS);
 			if (string_equals_ignore_case(palabra[0], "variables")) {
 				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
 			} else if (string_equals_ignore_case(palabra[0],
