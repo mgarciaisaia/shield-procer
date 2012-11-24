@@ -75,16 +75,16 @@ int main(int argc, char* argv[]) {
 	int bytesEnviados = 0;
 	
 	while((bytesLeidos = read(script, &buffer, TAMANIO_BUFFER)) > 0) {
-		log_debug("Leidos %d bytes", bytesLeidos);
+		log_debug(log, "Leidos %d bytes", bytesLeidos);
 		if((bytesEnviados = socket_send(conexion, buffer, bytesLeidos)) > 0) {
-			log_debug("Envie %d de %d bytes por %d", bytesEnviados, bytesLeidos, conexion);
+			log_debug(log, "Envie %d de %d bytes por %d", bytesEnviados, bytesLeidos, conexion);
 		}
 		
-                log_debug("Lei la linea: %.*s", bytesLeidos - 1, buffer + 1);
+                log_debug(log, "Lei la linea: %.*s", bytesLeidos - 1, buffer + 1);
 	}
 	
 	if(close(script)) {
-	       log_error("Error %d cerrando el archivo del script: %s", errno, strerror(errno));
+	       log_error(log, "Error %d cerrando el archivo del script: %s", errno, strerror(errno));
 	       exit(errno);
 	}
 	
@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
 			getchar();
 			system("stty cooked echo");
 			socket_send(conexion, PEDIDO_REANUDAR, strlen(PEDIDO_REANUDAR) + 1);
-			log_info("Proceso reanudado");
+			log_info(log, "Proceso reanudado");
 		}
 	}
 

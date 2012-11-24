@@ -1,4 +1,3 @@
-#include "network.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -6,6 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "network.h"
 
 struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port) {
     struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
