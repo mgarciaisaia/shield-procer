@@ -10,6 +10,7 @@
 #define ERROR_BINDED 1
 #define ERROR_LISTEN 2
 #define ERROR_SEND_PID 3
+#define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
     int socket = socket_binded(23456);
     if(socket < 0) {
@@ -34,7 +35,16 @@ int main(void) {
     
     void *input = NULL;
     int inputLenght = socket_receive(querySocket, &input);
-    
+    if(inputLenght != sizeof(uint8_t)) {
+	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %d\n", querySocket, inputLenght, sizeof(uint8_t));
+	    free(input);
+	    exit(ERROR_RECEIVE_PRIORITY);
+    }
+
+    printf("La prioridad del proceso %d es %d\n", querySocket, *(uint8_t *)input);
+    free(input);
+
+    inputLenght = socket_receive(querySocket, &input);
     printf("Recibido: %.*s\n", inputLenght, (char *)input);
     
     ejecutar((char *)input, querySocket);

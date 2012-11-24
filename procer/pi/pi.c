@@ -68,11 +68,27 @@ int main(int argc, char* argv[]) {
         free(nombreArchivoLog);
         
         log_info(log, "Ejecutando el proceso con PID %d", *pid);
+
+	uint8_t prioridadProceso = 0;
+	char *prioridadEnv = getenv("prioridad_PRI");
+	if(prioridadEnv != NULL) {
+		prioridadProceso = atoi(prioridadEnv);
+		if(prioridadProceso < 0 || prioridadProceso > 20) {
+			log_error(log, "Error leyendo la prioridad del proceso - %d no es una prioridad válida", prioridadProceso);
+			prioridadProceso = 0;
+		}
+	}
+
+	log_info(log, "La prioridad del proceso es %d", prioridadProceso);
+
+	int bytesEnviados = 0;
+	if((bytesEnviados = socket_send(conexion, &prioridadProceso, sizeof(prioridadProceso))) <= 0) {
+		log_error(log, "Error %d enviando la prioridad del proceso al PP: %s", errno, strerror(errno));
+	}
         
 	#define TAMANIO_BUFFER 1024
 	char buffer[TAMANIO_BUFFER];
 	int bytesLeidos = 0;
-	int bytesEnviados = 0;
 	
 	while((bytesLeidos = read(script, &buffer, TAMANIO_BUFFER)) > 0) {
 		log_debug(log, "Leidos %d bytes", bytesLeidos);
