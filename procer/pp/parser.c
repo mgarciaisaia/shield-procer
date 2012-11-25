@@ -19,7 +19,7 @@
 #include "commons/collections/list.h"
 #include "commons/network.h"
 
-int ejecutar(char *programa, int socketInterprete) {
+int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
 
 //	char * programa =
 //			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\nfin_programa\n";
@@ -29,7 +29,7 @@ int ejecutar(char *programa, int socketInterprete) {
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables i,b\n\ncomienzo_programa\n\ti=1\n\tinicio_for:\n\ti=i+1\n\timprimir i\n\tb=i-10\n\tsnc b inicio_for\nfin_programa";
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a\n\ncomienzo_programa\n\ta=1\n\ta=a+1\n\ta=a+2\n\timprimir a\nfin_programa";
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
-	t_pcb * pcb = crear_pcb(programa, socketInterprete);
+	t_pcb * pcb = crear_pcb(programa, socketInterprete, prioridadProceso);
 	procesar(pcb);
 	eliminar_estructuras(pcb);
 	return EXIT_SUCCESS;
@@ -40,10 +40,11 @@ int ejecutar(char *programa, int socketInterprete) {
  * Cargo los diccionarios de variables(no se setean acá!!!), funciones y etiquetas, para que al procesar
  * ya tenga las referencias
  */
-t_pcb *crear_pcb(char* programa, int socketInterprete) {
+t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 	// todo: cargar pcb->factor_ajuste y inicializar/asignar pcb->valor_estimacion_anterior
 	pcb->id_proceso = socketInterprete;
+        pcb->prioridad = prioridad;
 	pcb->datos = dictionary_create(NULL);
 	pcb->d_funciones = dictionary_create(NULL);
 	pcb->d_etiquetas = dictionary_create(NULL);

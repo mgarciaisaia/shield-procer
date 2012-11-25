@@ -41,13 +41,14 @@ int main(void) {
 	    exit(ERROR_RECEIVE_PRIORITY);
     }
 
-    printf("La prioridad del proceso %d es %d\n", querySocket, *(uint8_t *)input);
+    uint8_t prioridadProceso = *(uint8_t *) input;
     free(input);
+    printf("La prioridad del proceso %d es %d\n", querySocket, prioridadProceso);
 
     inputLenght = socket_receive(querySocket, &input);
     printf("Recibido: %.*s\n", inputLenght, (char *)input);
     
-    ejecutar((char *)input, querySocket);
+    ejecutar((char *)input, querySocket, prioridadProceso);
     
     close(querySocket);
     close(socket);

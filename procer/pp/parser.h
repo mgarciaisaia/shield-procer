@@ -20,6 +20,7 @@ typedef struct {
 	double factor_ajuste;
 	double valor_estimacion_anterior;
 	uint32_t ultima_rafaga;
+        uint8_t prioridad;
 
 	ptrPila stack;
 	char ** codigo;
@@ -35,8 +36,8 @@ typedef struct {
 	uint32_t prioridad;
 } t_reg_prueba;
 
-int ejecutar(char *programa, int socketInterprete);
-t_pcb *crear_pcb(char *programa, int socketInterprete);
+int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
+t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);
 int es_un_comentario(char *);
 void cargar_variables_en_diccionario(t_dictionary *, char *);
 void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);
