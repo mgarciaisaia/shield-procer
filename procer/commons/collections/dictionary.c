@@ -146,13 +146,15 @@ void dictionary_iterator(t_dictionary *self, void(*closure)(char*,void*)) {
 			continue;
 		}
 
-		do {
+		while (element != NULL) {
 
 			next_element = element->next;
 
 			closure(element->key, element);
 
-		} while (next_element != NULL);
+			element = next_element;
+		}
+
 	}
 }
 
