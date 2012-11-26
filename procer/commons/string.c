@@ -212,6 +212,47 @@ bool string_equals_ignore_case(char *actual, char *expected) {
 	return strcasecmp(actual, expected) == 0;
 }
 
+/**
+ * @NAME: string_tokens
+ * @DESC: Tokeniza un string dado un separador, conservando los tokens vacíos
+ */
+char **string_tokens(char *text, char separator) {
+    char **tokens = NULL;
+    char *temporal = NULL;
+    int tokens_count = 0, temporal_length = 0;
+    
+    int cursor = 0, token_start = 0;
+    while(text[cursor] != '\0') {
+        if(text[cursor] == separator) {
+            
+            temporal_length = cursor - token_start;
+            temporal = malloc(temporal_length + 1);
+            strncpy(temporal, &(text[token_start]), temporal_length);
+            temporal[temporal_length] = '\0';
+            
+            tokens = realloc(tokens, sizeof(char *) * ++tokens_count);
+            tokens[tokens_count - 1] = temporal;
+            
+            token_start = cursor + 1;
+        }
+        cursor++;
+    }
+    
+    // TODO: avoid duplicating code
+    // Every time you copy&paste your code, God kills a kitty
+    temporal_length = cursor - token_start;
+    temporal = malloc(temporal_length + 1);
+    strncpy(temporal, &(text[token_start]), temporal_length);
+    temporal[temporal_length] = '\0';
+
+    tokens = realloc(tokens, sizeof(char *) * ++tokens_count);
+    tokens[tokens_count - 1] = temporal;
+    
+    tokens = realloc(tokens, sizeof(char *) * ++tokens_count);
+    tokens[tokens_count - 1] = NULL;
+    
+    return tokens;
+}
 
 /**
  * @NAME: string_split
