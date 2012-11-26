@@ -28,6 +28,8 @@
 	t_registro_stack pila_pop(ptrPila *);
 	int pila_vacia(ptrPila *);
 	void nodos_pila(ptrNodo);
+        
+        void pila_hacer(ptrPila pila, void (*bloque)(t_registro_stack *));
 
 
 #endif /* PILA_H_ */

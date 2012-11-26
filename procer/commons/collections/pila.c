@@ -74,3 +74,15 @@ void nodos_pila(ptrNodo nodo) {
 		printf("\n");
 	}
 }
+
+
+void pila_hacer(ptrPila pila, void (*bloque)(t_registro_stack *)) {
+    nodo_t *elemento = (nodo_t *)pila;
+    
+    while( elemento != NULL ) {
+        
+        bloque(&(elemento->registro));
+        
+        elemento = elemento->siguiente;
+    }
+}
