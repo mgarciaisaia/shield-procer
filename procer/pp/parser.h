@@ -7,7 +7,7 @@
 
 #include "commons/collections/dictionary.h"
 #include <stdint.h>
-#include "commons/collections/pila.h"
+#include "commons/collections/stack.h"
 #include "commons/collections/list.h"
 
 typedef struct {
@@ -22,7 +22,7 @@ typedef struct {
 	uint32_t ultima_rafaga;
         uint8_t prioridad;
 
-	ptrPila stack;
+	t_stack *stack;
 	char ** codigo;
 } t_pcb;
 
@@ -35,6 +35,11 @@ typedef struct {
 	double tiempo_entrada_listos;
 	uint32_t prioridad;
 } t_reg_prueba;
+
+typedef struct {
+	uint32_t retorno;
+	char * nombre_funcion;
+} t_registro_stack;
 
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
 t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);

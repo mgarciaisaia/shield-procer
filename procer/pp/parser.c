@@ -15,7 +15,7 @@
 #include "commons/string.h"
 #include "commons/collections/dictionary.h"
 #include <string.h>
-#include "commons/collections/pila.h"
+#include "commons/collections/stack.h"
 #include "commons/collections/list.h"
 #include "commons/network.h"
 #include <signal.h>
@@ -67,11 +67,12 @@ void suspender(t_pcb *pcb) {
     string_concat(&mensaje, "----------------\n\n");
     string_concat(&mensaje, "-- Estructura de Stack --\n");
     
-    void mostrarEntradaStackEnMensaje(t_registro_stack *entradaStack) {
-        string_concat(&mensaje, "%d,%s\n", entradaStack->retorno, entradaStack->nombre_funcion);
+    void mostrarEntradaStackEnMensaje(void *entradaStack) {
+        string_concat(&mensaje, "%d,%s\n", ((t_registro_stack *)entradaStack)->retorno,
+                ((t_registro_stack *) entradaStack)->nombre_funcion);
     }
     
-    pila_hacer(pcb->stack, mostrarEntradaStackEnMensaje);
+    stack_iterate(pcb->stack, mostrarEntradaStackEnMensaje);
     
     string_concat(&mensaje, "\n----------------\n");
     
@@ -123,16 +124,17 @@ t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
 	pcb->datos = dictionary_create(NULL);
 	pcb->d_funciones = dictionary_create(NULL);
 	pcb->d_etiquetas = dictionary_create(NULL);
-	char* separador = "\n";
-	pcb->codigo = string_split(programa, separador);
+        pcb->stack = stack_create();
+	#define SEPARADOR_LINEAS '\n'
+	pcb->codigo = string_tokens(programa, SEPARADOR_LINEAS);
 	int i = 0;
 	//primer recorrido para cargar estructuras del PCB
 	//ID, PC, DATOS, STACK, CODIGO -- DICCIONARIO DE FUNCIONES, DICCIONARIO DE ETIQUETAS
 	while (pcb->codigo[i] != NULL) {
 		string_trim(&pcb->codigo[i]);
 		if (!es_un_comentario(pcb->codigo[i])) {
-			#define SEPARADOR_PALABRAS " "
-			char ** palabra = string_split(pcb->codigo[i], SEPARADOR_PALABRAS);
+			#define SEPARADOR_PALABRAS ' '
+			char ** palabra = string_tokens(pcb->codigo[i], SEPARADOR_PALABRAS);
 			if (string_equals_ignore_case(palabra[0], "variables")) {
 				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
 			} else if (string_equals_ignore_case(palabra[0],
@@ -203,6 +205,7 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
 	char * instruccion = calloc(1,strlen(pcb->codigo[pc]) + 1);
 	strncpy(instruccion,pcb->codigo[pc],strlen(pcb->codigo[pc]));
 	string_trim(&instruccion);
+        printf("Procesando la instruccion %d: << %s >>\n", pc, instruccion);
 	if (es_fin_programa(instruccion)) {
 		valor_ejecucion = 0;
 	} else if (es_funcion(pcb, instruccion)) {
@@ -256,18 +259,18 @@ int es_un_salto(char * instruccion){
 }
 
 void procesar_funcion(t_pcb * pcb, char * instruccion){
-	t_registro_stack registro_stack;
-	registro_stack.nombre_funcion = calloc(1,strlen(instruccion) + 1);
-	registro_stack.retorno=pcb->program_counter;
-	strncpy(registro_stack.nombre_funcion,instruccion,strlen(instruccion));
-	pila_push(&pcb->stack,registro_stack);
+	t_registro_stack *registro_stack = malloc(sizeof(t_registro_stack));
+	registro_stack->nombre_funcion = calloc(1,strlen(instruccion) + 1);
+	registro_stack->retorno=pcb->program_counter;
+	strncpy(registro_stack->nombre_funcion,instruccion,strlen(instruccion));
+        stack_push(pcb->stack, registro_stack);
 	pcb->program_counter = (uint32_t)dictionary_get(pcb->d_funciones,instruccion);
 }
 
 void procesar_fin_funcion(t_pcb * pcb,char * instruccion){
-	t_registro_stack registro_stack = pila_pop(&pcb->stack);
-	pcb->program_counter = registro_stack.retorno;
-	free(registro_stack.nombre_funcion);
+	t_registro_stack *registro_stack = (t_registro_stack *) stack_pop(pcb->stack);
+	pcb->program_counter = registro_stack->retorno;
+	free(registro_stack->nombre_funcion);
 }
 
 void procesar_funcion_imprimir(t_pcb * pcb,char * instruccion){
