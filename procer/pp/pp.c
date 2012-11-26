@@ -12,6 +12,7 @@
 #define ERROR_SEND_PID 3
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
+    printf("Iniciado PROCER con PID %d\n", getpid());
     int socket = socket_binded(23456);
     if(socket < 0) {
         printf("Error %d bindeando el socket: %s\n", errno, strerror(errno));

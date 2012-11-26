@@ -18,6 +18,74 @@
 #include "commons/collections/pila.h"
 #include "commons/collections/list.h"
 #include "commons/network.h"
+#include <signal.h>
+#include <unistd.h>
+
+int hayQueSuspenderProceso = 0;
+
+void suspenderProceso(int signal) {
+    hayQueSuspenderProceso = 1;
+}
+
+void registrarSignalListener() {
+    struct sigaction *handler = malloc(sizeof(struct sigaction));
+
+    handler->sa_handler = suspenderProceso;
+    sigemptyset(&(handler->sa_mask));
+    handler->sa_flags = SA_RESTART;
+
+    sigaction(SIGUSR1, handler, NULL);
+}
+
+void suspender(t_pcb *pcb) {
+    char *mensaje = NULL;
+    // Mensaje que empieza con "1" hace que el PI pida confirmacion para
+    // reanudar la ejecucion del proceso
+    mensaje = strdup("1");
+    
+    string_concat(&mensaje, "----------------\n\n");
+    string_concat(&mensaje, "ID=%d\n", pcb->id_proceso);
+    string_concat(&mensaje, "PC=%d\n", pcb->program_counter);
+    string_concat(&mensaje, "\n-- Estructura de codigo --\n");
+    
+    int indice = 0;
+    
+    while(pcb->codigo[indice] != NULL) {
+        string_concat(&mensaje, "%s\n", pcb->codigo[indice++]);
+    }
+    
+    string_concat(&mensaje, "----------------\n");
+    string_concat(&mensaje, "\n-- Estructuras de datos --\n");
+    
+    // TODA la magia negra junta: inner functions!! (?!!?!?!)
+    void mostrarVariableEnMensaje(char *variable, void *valor) {
+        string_concat(&mensaje, "%s=%d\n", variable, *(int *)valor);
+    }
+    
+    dictionary_iterator(pcb->datos, mostrarVariableEnMensaje);
+    
+    string_concat(&mensaje, "----------------\n\n");
+    string_concat(&mensaje, "-- Estructura de Stack --\n");
+    
+    void mostrarEntradaStackEnMensaje(t_registro_stack *entradaStack) {
+        string_concat(&mensaje, "%d,%s\n", entradaStack->retorno, entradaStack->nombre_funcion);
+    }
+    
+    pila_hacer(pcb->stack, mostrarEntradaStackEnMensaje);
+    
+    string_concat(&mensaje, "\n----------------\n");
+    
+    string_concat(&mensaje, "\nProceso suspendido...\n\n");
+    
+    socket_send(pcb->id_proceso, mensaje, strlen(mensaje) + 1);
+    
+    free(mensaje);
+    
+    do {
+        // FIXME: tengo que guardarme los bytes recibidos?
+        socket_receive(pcb->id_proceso, (void *)&mensaje);
+    } while (mensaje != NULL && strcmp(mensaje, "1REANUDARPROCESO") != 0);
+}
 
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
 
@@ -30,7 +98,14 @@ int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a\n\ncomienzo_programa\n\ta=1\n\ta=a+1\n\ta=a+2\n\timprimir a\nfin_programa";
 //			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
 	t_pcb * pcb = crear_pcb(programa, socketInterprete, prioridadProceso);
-	procesar(pcb);
+        registrarSignalListener();
+        while(1) {
+            procesar(pcb);
+            if(hayQueSuspenderProceso) {
+                suspender(pcb);
+                hayQueSuspenderProceso = 0;
+            }
+        }
 	eliminar_estructuras(pcb);
 	return EXIT_SUCCESS;
 }
@@ -87,7 +162,7 @@ void cargar_variables_en_diccionario(t_dictionary * diccionario,
 	char ** variable = string_split(string_variables, separador_variables);
 	int i;
 	for (i = 0; variable[i] != NULL; i++) {
-		dictionary_put(diccionario, strdup(variable[i]), NULL);
+		dictionary_put(diccionario, strdup(variable[i]), 0);
 	}
 }
 
@@ -109,7 +184,8 @@ void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
 // todo: ponerle las condiciones que corresponden al while
 void procesar(t_pcb * pcb) {
 	pcb->ultima_rafaga = 0;
-	while(ejecutarInstruccion(pcb));
+	// FIXME: este sleep() es CUALQUIERA
+	while(ejecutarInstruccion(pcb) && sleep(2) && !hayQueSuspenderProceso);
 	printf("lineas ejecutadas por el proceso: %d\n",pcb->ultima_rafaga);
 }
 
