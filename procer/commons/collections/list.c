@@ -366,3 +366,34 @@ static t_link_element* list_find_element(t_list *self, bool(*condition)(void*), 
 
 	return element;
 }
+
+void list_sort(t_list *self, bool (*comparator)(void *, void *)) {
+    int unsorted_elements = self->elements_count;
+    if(unsorted_elements < 2) {
+        return;
+    }
+    t_link_element *auxiliar = NULL;
+    bool sorted = true;
+    do {
+        t_link_element *previous_element = self->head, *cursor = previous_element->next;
+        sorted = true;
+        int index = 0, last_changed = unsorted_elements;
+        while(index < unsorted_elements && cursor != NULL) {
+            printf("%d < %d: %d\n", (int)previous_element->data, (int)cursor->data, comparator(previous_element->data, cursor->data));
+            if(!comparator(previous_element->data, cursor->data)) {
+               printf("Intercambio %d con %d\n", (int)previous_element->data, (int)cursor->data);
+               auxiliar = cursor->data;
+               cursor->data = previous_element->data;
+               previous_element->data = auxiliar;
+               last_changed = index;
+               sorted = false;
+            }
+            previous_element = cursor;
+            cursor = cursor->next;
+            index++;
+        }
+        unsorted_elements = last_changed;
+    } while(!sorted);
+    
+}
+

@@ -59,6 +59,8 @@
 
 	int list_size(t_list *);
 	int list_is_empty(t_list *);
+        
+        void list_sort(t_list *, bool (*comparator)(void *, void *));
 
 #endif /*LIST_H_*/
 
