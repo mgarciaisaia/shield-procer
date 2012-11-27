@@ -21,6 +21,8 @@
 #include <signal.h>
 #include <unistd.h>
 
+#define FACTOR_AJUSTE_SPN 0.5
+
 int hayQueSuspenderProceso = 0;
 
 void suspenderProceso(int signal) {
@@ -118,7 +120,6 @@ int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
  */
 t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
-	// todo: cargar pcb->factor_ajuste y inicializar/asignar pcb->valor_estimacion_anterior
 	pcb->id_proceso = socketInterprete;
         pcb->prioridad = prioridad;
 	pcb->datos = dictionary_create(NULL);
@@ -151,6 +152,9 @@ t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
 		}
 		i++;
 	}
+        // TODO: ver si esta bueno este valor o da para cambiarlo
+        pcb->valor_estimacion_anterior = i;
+        pcb->ultima_rafaga = 0;
         return pcb;
 }
 
@@ -406,14 +410,11 @@ t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list * lista){
 	t_reg_prueba * reg_prueba_rafaga_mas_corta = list_get(lista,0);
 	int i;
 	int indice_reg_rafaga_mas_corta;
-	double estimacion_rafaga_reg_rafaga_mas_corta = calcular_rafaga(reg_prueba_rafaga_mas_corta->pcb->factor_ajuste,
-												reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior,
+	double estimacion_rafaga_reg_rafaga_mas_corta = calcular_rafaga(reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior,
 												reg_prueba_rafaga_mas_corta->pcb->ultima_rafaga);
 	for(i = 0,indice_reg_rafaga_mas_corta = 0;i < list_size(lista);i++){
 		t_reg_prueba * reg_prueba = list_get(lista,i);
-		double estimacion_rafaga = calcular_rafaga(reg_prueba->pcb->factor_ajuste,
-													reg_prueba->pcb->valor_estimacion_anterior,
-													reg_prueba->pcb->ultima_rafaga);
+		double estimacion_rafaga = calcular_rafaga(reg_prueba->pcb->valor_estimacion_anterior, reg_prueba->pcb->ultima_rafaga);
 		if(estimacion_rafaga_reg_rafaga_mas_corta > estimacion_rafaga){
 			estimacion_rafaga_reg_rafaga_mas_corta = estimacion_rafaga;
 			reg_prueba_rafaga_mas_corta = reg_prueba;
@@ -424,6 +425,6 @@ t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list * lista){
 	return list_remove(lista,indice_reg_rafaga_mas_corta);
 }
 
-double calcular_rafaga(double factor_ajuste,double valor_estimacion_anterior,double ultima_rafaga){
-	return factor_ajuste * ultima_rafaga + (1 - factor_ajuste) * valor_estimacion_anterior;
+double calcular_rafaga(double valor_estimacion_anterior, double ultima_rafaga) {
+	return FACTOR_AJUSTE_SPN * ultima_rafaga + (1 - FACTOR_AJUSTE_SPN) * valor_estimacion_anterior;
 }

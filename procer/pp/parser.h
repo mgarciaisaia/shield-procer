@@ -17,7 +17,6 @@ typedef struct {
 	t_dictionary * d_funciones;
 	t_dictionary * d_etiquetas;
 //	ATRIBUTOS PARA PODER USAR EN EL ALGORITMO SPN
-	double factor_ajuste;
 	double valor_estimacion_anterior;
 	uint32_t ultima_rafaga;
         uint8_t prioridad;
@@ -76,4 +75,4 @@ void imprimir(int pid, char *, uint32_t);
 t_reg_prueba * dame_elemento_mas_antiguo(t_list *);
 t_reg_prueba * dame_elemento_mayor_prioridad(t_list *);
 t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list *);
-double calcular_rafaga(double, double, double);
+double calcular_rafaga(double, double);
