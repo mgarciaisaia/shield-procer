@@ -379,9 +379,7 @@ void list_sort(t_list *self, bool (*comparator)(void *, void *)) {
         sorted = true;
         int index = 0, last_changed = unsorted_elements;
         while(index < unsorted_elements && cursor != NULL) {
-            printf("%d < %d: %d\n", (int)previous_element->data, (int)cursor->data, comparator(previous_element->data, cursor->data));
             if(!comparator(previous_element->data, cursor->data)) {
-               printf("Intercambio %d con %d\n", (int)previous_element->data, (int)cursor->data);
                auxiliar = cursor->data;
                cursor->data = previous_element->data;
                previous_element->data = auxiliar;
