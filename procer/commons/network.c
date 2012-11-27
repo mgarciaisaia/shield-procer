@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "network.h"
+#include <sys/stat.h>
+#include <sys/sendfile.h>
 
 struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port) {
     struct sockaddr_in *address = malloc(sizeof(struct sockaddr_in));
@@ -99,4 +101,27 @@ int socket_receive(int socket, void **buffer) {
     }
     
     return receivedBytes;
+}
+
+int socket_sendfile(int socket, int file_descriptor) {
+	struct stat st;
+	int sentBytes;
+
+	if (fstat(file_descriptor, &st)) {
+		perror("fstat");
+		return -2;
+	}
+	uint32_t file_lenght = st.st_size;
+
+	if((sentBytes = send(socket, &file_lenght, sizeof(file_lenght), 0)) <= 0) {
+		if(sentBytes < 0) {
+            perror("sendfile: Error sending header");
+            return -3;
+        } else if(sentBytes == 0) {
+			printf("sendfile: Error sending header - closed connection");
+			return 0;
+		}
+	}
+
+	return sendfile(socket, file_descriptor, NULL, file_lenght);
 }

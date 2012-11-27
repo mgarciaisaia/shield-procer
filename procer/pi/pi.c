@@ -14,6 +14,7 @@
 #define ERROR_PARAMETROS 1
 #define NO_PP_IP 2
 #define NO_PP_PUERTO 3
+#define ERROR_SENDFILE 4
 
 int main(int argc, char* argv[]) {
 	if(argc != 2) {
@@ -86,17 +87,15 @@ int main(int argc, char* argv[]) {
 		log_error(log, "Error %d enviando la prioridad del proceso al PP: %s", errno, strerror(errno));
 	}
         
-	#define TAMANIO_BUFFER 1024
-	char buffer[TAMANIO_BUFFER];
 	int bytesLeidos = 0;
 	
-	while((bytesLeidos = read(script, &buffer, TAMANIO_BUFFER)) > 0) {
-		log_debug(log, "Leidos %d bytes", bytesLeidos);
-		if((bytesEnviados = socket_send(conexion, buffer, bytesLeidos)) > 0) {
-			log_debug(log, "Envie %d de %d bytes por %d", bytesEnviados, bytesLeidos, conexion);
-		}
-		
-                log_debug(log, "Lei la linea: %.*s", bytesLeidos - 1, buffer + 1);
+	if((bytesLeidos = socket_sendfile(conexion, script)) <= 0) {
+		log_error(log, "Error %d enviando el archivo %s por %d: %s", errno, pathScript, conexion, strerror(errno));
+		close(conexion);
+		close(script);
+		exit(ERROR_SENDFILE);
+	} else {
+		log_debug(log, "Enviados %d bytes", bytesLeidos);
 	}
 	
 	if(close(script)) {

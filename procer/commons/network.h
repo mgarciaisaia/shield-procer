@@ -12,6 +12,7 @@ struct sockaddr_in *socket_address(in_addr_t ip, uint16_t port);
 int socket_binded(uint16_t port);
 int socket_send(int socket, void *buffer, uint32_t lenght);
 int socket_receive(int socket, void **buffer);
+int socket_sendfile(int socket, int file_descriptor);
 
 
 #ifdef	__cplusplus
