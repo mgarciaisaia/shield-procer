@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 	#include "commons/collections/dictionary.h"
-	int lts(void);
+	void *lts(void *);
 
 
 #ifdef	__cplusplus

@@ -1,6 +1,7 @@
 #include "commons/collections/sync_queue.h"
 #include "commons/collections/dictionary.h"
 #include "colas.h"
+#include <stdio.h>
 
 t_sync_queue *cola_pendientes_nuevos;
 t_sync_queue *cola_nuevos;
@@ -25,4 +26,12 @@ void colas_initialize() {
 	cola_suspendidos = sync_queue_create();
 
 	tabla_procesos = dictionary_create(NULL);
+}
+
+
+void *sacasaca(void *nada) {
+	while(1) {
+		sync_queue_pop(cola_pendientes_nuevos);
+		printf("Saque uno de nuevos!\n");
+	}
 }

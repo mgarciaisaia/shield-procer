@@ -7,6 +7,7 @@
 #include "parser.h"
 #include "server.h"
 #include "colas.h"
+#include <pthread.h>
 
 
 #define ERROR_BINDED 1
@@ -16,7 +17,13 @@
 int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
-	lts();
+	pthread_t thread_lts, thread_consume;
+	void *nada;
+	pthread_create(&thread_lts, NULL, lts, NULL);
+	pthread_create(&thread_consume, NULL, sacasaca, NULL);
+	
+	pthread_join(thread_lts, &nada);
+	pthread_join(thread_consume, &nada);
 	return 0;
     int socket = socket_binded(23456);
     if(socket < 0) {

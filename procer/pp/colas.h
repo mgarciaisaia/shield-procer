@@ -21,6 +21,9 @@ extern t_dictionary *tabla_procesos;
 
 void colas_initialize(void);
 
+
+void *sacasaca(void *nada);
+
 #ifdef	__cplusplus
 }
 #endif

@@ -32,7 +32,7 @@ void *get_in_addr(struct sockaddr *sa) {
 	return &(((struct sockaddr_in6*) sa)->sin6_addr);
 }
 
-int lts() {
+void *lts(void *nada) {
 	fd_set master; // master file descriptor list
 	fd_set read_fds; // temp file descriptor list for select()
 	int fdmax; // maximum file descriptor number
@@ -176,6 +176,6 @@ int lts() {
 		} // END looping through file descriptors
 	} // END for(;;)--and you thought it would never end!
 
-	return 0;
+	return NULL;
 }
 
