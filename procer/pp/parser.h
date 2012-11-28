@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "commons/collections/stack.h"
 #include "commons/collections/list.h"
+#include <stdbool.h>
 
 typedef struct {
 	int id_proceso;
@@ -50,7 +51,7 @@ void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);
 void cargar_etiquetas_en_diccionario(t_dictionary *, char *, void *);
 int procesar(t_pcb * pcb);
 void eliminar_estructuras(t_pcb *);
-uint32_t ejecutarInstruccion(t_pcb *);
+bool ejecutarInstruccion(t_pcb *);
 
 int es_funcion(t_pcb *, char *);
 int es_funcion_io(char *);
@@ -67,7 +68,7 @@ void procesar_funcion_imprimir(t_pcb *, char *);
 void procesar_salto(t_pcb *, char *);
 void procesar_asignacion(t_pcb *, char *);
 
-void posicionarse_proxima_instruccion_ejecutable(t_pcb *);
+bool posicionarse_proxima_instruccion_ejecutable(t_pcb *);
 void imprimir(int pid, char *, uint32_t);
 
 //=============================================
@@ -78,3 +79,5 @@ bool es_primer_pcb_mas_antiguo(void *, void *);
 double calcular_rafaga(double, double);
 bool es_primer_pcb_de_menor_prioridad(void *, void *);
 bool es_primer_pcb_de_rafaga_mas_corta(void *, void *);
+
+bool es_io_bloqueante(char * );

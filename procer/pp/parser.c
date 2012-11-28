@@ -20,6 +20,9 @@
 #include "commons/network.h"
 #include <signal.h>
 #include <unistd.h>
+#include <stdbool.h>
+#include "commons/collections/sync_queue.h"
+#include "colas.h"
 
 #define FACTOR_AJUSTE_SPN 0.5
 
@@ -131,6 +134,7 @@ void inicializar_pcb(t_pcb *pcb) {
 		}
 		i++;
 	}
+	posicionarse_proxima_instruccion_ejecutable(pcb);
 	pcb->valor_estimacion_anterior = i;
 }
 
@@ -272,18 +276,17 @@ void eliminar_estructuras(t_pcb * pcb) {
 	free(pcb);
 }
 
-uint32_t ejecutarInstruccion(t_pcb * pcb) {
-	uint32_t valor_ejecucion = 1;
-	posicionarse_proxima_instruccion_ejecutable(pcb);
+/*
+ * Devuelve false si el proceso fue movido a otra cola
+ */
+bool ejecutarInstruccion(t_pcb * pcb) {
+	bool seguir_ejecutando = true;
 	uint32_t pc = pcb->program_counter;
 	char * instruccion = calloc(1,strlen(pcb->codigo[pc]) + 1);
 	strncpy(instruccion,pcb->codigo[pc],strlen(pcb->codigo[pc]));
 	string_trim(&instruccion);
         printf("Procesando la instruccion %d: << %s >>\n", pc, instruccion);
-	if (es_fin_programa(instruccion)) {
-		valor_ejecucion = 0;
-		// FIXME: aca hay que cortar la ejecucion!!!
-	} else if (es_funcion(pcb, instruccion)) {
+    if (es_funcion(pcb, instruccion)) {
 		procesar_funcion(pcb,instruccion);
 	} else if(es_fin_funcion(instruccion)){
 		procesar_fin_funcion(pcb,instruccion);
@@ -292,13 +295,26 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
 	} else if(es_un_salto(instruccion)){
 		procesar_salto(pcb,instruccion);
 	} else if(es_funcion_io(instruccion)){
-		printf("es una función io");
+		if(es_io_bloqueante(instruccion)){
+			// fixme: crear estructura para las io, que guarde el tiempo
+			sync_queue_push(cola_bloqueados,pcb);
+			seguir_ejecutando = false;
+			printf("meti un io bloqueante\n");
+		} else {
+			// fixme: implementar no bloqueante
+		}
 	} else if(es_asignacion(instruccion)){
 		procesar_asignacion(pcb,instruccion);
 	}
 	free(instruccion);
 	(pcb->program_counter)++;
-	return valor_ejecucion;
+	bool programa_continua = posicionarse_proxima_instruccion_ejecutable(pcb);
+	if(!programa_continua){
+		sync_queue_push(cola_fin_programa,pcb);
+		printf("finalizo %d\n",pcb->id_proceso);
+	}
+	seguir_ejecutando = programa_continua && seguir_ejecutando;
+	return seguir_ejecutando;
 }
 
 int es_funcion(t_pcb * pcb, char * instruccion) {
@@ -430,10 +446,14 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion){
 /*
  * Salta instrucciones hasta encontrar una que no sea ni un comentario, ni una etiqueta
  */
-void posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
+bool posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 	while(es_un_comentario(pcb->codigo[pcb->program_counter])
 			|| es_etiqueta(pcb,pcb->codigo[pcb->program_counter]))
 		(pcb->program_counter)++;
+	if(es_fin_programa(pcb->codigo[pcb->program_counter])){
+			return false;
+	}
+	return true;
 }
 
 void imprimir(int pid, char * variable, uint32_t valor) {
@@ -471,4 +491,8 @@ bool es_primer_pcb_de_rafaga_mas_corta(void * reg_void_1, void * reg_void_2){
 	double estimacion_rafaga_reg_2 = calcular_rafaga(reg_2->pcb->valor_estimacion_anterior,
 												reg_2->pcb->ultima_rafaga);
 	return estimacion_rafaga_reg_1 < estimacion_rafaga_reg_2;
+}
+
+bool es_io_bloqueante(char * instruccion){
+	return true;
 }

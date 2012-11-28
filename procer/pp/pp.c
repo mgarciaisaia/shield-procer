@@ -27,6 +27,7 @@ void *pendientes_nuevos(void *nada) {
 void * sts(void *);
 void encolar_en_listos(void);
 void encolar_lap_en_ll(void *);
+void * procer(void *);
 uint32_t no_encontro_pcb;
 
 
@@ -38,8 +39,8 @@ int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
 	
-    #define THREAD_COUNT 3
-	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts};
+    #define THREAD_COUNT 4
+	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts, procer};
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
@@ -133,4 +134,20 @@ void encolar_lap_en_ll(void * reg_lista_void){
 		sync_queue_ordered_insert(cola_listos,registro_listos,es_primer_pcb_mas_antiguo);
 		printf("agarro uno de lista auxiliar de prioridades\n");
 	}
+}
+
+void * procer(void * nada){
+	while(1){
+		t_reg_listos * registro_listo = sync_queue_pop(cola_listos);
+		// todo: INICIALIZAR QUANTUM SI SE NECESITA
+		int instrucciones_ejecutadas = 0;
+		bool seguir_ejecutando = true;
+		while(seguir_ejecutando){
+			seguir_ejecutando = ejecutarInstruccion(registro_listo->pcb);
+			//fixme: chequear suspendido
+			//fixme: chequear quantum
+			instrucciones_ejecutadas++;
+		}
+	}
+	return NULL;
 }
