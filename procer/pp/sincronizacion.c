@@ -15,13 +15,16 @@
 #include <semaphore.h>
 #include "prueba_listas.h"
 
+#include "commons/collections/sync_queue.h"
+#include "colas.h"
+
 t_list * lista_procesos_nuevos;
 t_list * lista_procesos_reanudados;
 t_list * lista_fin_quantum;
 t_list * lista_fin_io;
 t_list * lista_de_listos;
 
-t_list * lista_auxiliar_prioridades;
+//t_list * lista_auxiliar_prioridades;
 
 t_dictionary * diccionario_listas;
 
@@ -143,32 +146,25 @@ void cargar_listas_a_LAP(){
 	list_replace(lista_auxiliar_prioridades,3,reg_lista);
 }
 
-void encolar_en_listos(){
-	no_encontro_pcb = 1; //PARA PODER SACAR SOLO UN ELEMENTO DE LA LISTAS DE PRIORIDADES
-	list_iterate(lista_auxiliar_prioridades,encolar_lap_en_ll);
-}
-
-
-/*
- * NO ESTOY SEGURO SI ESTE THREAD TRABAJA ASÍ
- */
 int sts() {
-	cargar_listas_a_LAP(); // <-- ESTO TAL VEZ VAYA FUERA DEL WHILE, Y SE LA LLAME CUANDO SE NECESITE REORDENAR
 	while(1){
 		encolar_en_listos();
 	}
 	return EXIT_SUCCESS;
 }
 
+void encolar_en_listos(){
+	no_encontro_pcb = 1; //PARA PODER SACAR SOLO UN ELEMENTO DE LA LISTAS DE PRIORIDADES
+	// todo: cargar la lista_auxiliar_prioridades
+	list_iterate(lista_auxiliar_prioridades,encolar_lap_en_ll);
+}
+
 void encolar_lap_en_ll(void * reg_lista_void){
-	t_reg_lista * reg_lista = reg_lista_void;
-	while(!list_is_empty(reg_lista->lista) && no_encontro_pcb){
+	t_sync_queue * sync_queue = reg_lista_void;
+	while(!list_is_empty(sync_queue->queue) && no_encontro_pcb){
 		no_encontro_pcb = 0;
-		t_pcb * pcb = sacar_proceso(reg_lista->lista,reg_lista->sem_mutex);
-//		char * valor = list_remove(reg_lista->lista,0);
-		sem_post(&contador_lista_listos); // todo: EL CONTADOR NO PUEDE PASAR EL MMP
-		// todo: HACER UN INSERTAR ORDENADO DE ACUERDO AL ALGORITMO PARA LA LISTA DE LISTOS
-		agregar_proceso(lista_de_listos,&mutex_lista_de_listos,pcb);
+		t_pcb * pcb = sync_queue_pop(sync_queue);
+		sync_queue_ordered_insert(cola_listos,pcb,algoritmo_ordenamiento);
 	}
 }
 
@@ -187,8 +183,7 @@ void agregar_proceso(t_list * lista, pthread_mutex_t * sem_mutex, t_pcb *pcb) {
 
 int procer(){
 	while(1){
-		sem_wait(&contador_lista_listos);
-		t_pcb * pcb = sacar_proceso(lista_de_listos,&mutex_lista_de_listos);
+		t_pcb * pcb = sync_queue_pop(cola_listos);
 		// todo: INICIALIZAR QUANTUM SI SE NECESITA
 //		procesar(pcb);
 	}
