@@ -90,6 +90,69 @@ void suspender(t_pcb *pcb) {
     } while (mensaje != NULL && strcmp(mensaje, "1REANUDARPROCESO") != 0);
 }
 
+t_pcb *nuevo_pcb(int id_proceso) {
+	t_pcb *pcb = malloc(sizeof(t_pcb));
+	pcb->id_proceso = id_proceso;
+	pcb->prioridad = 40;
+	pcb->codigo = NULL;
+	pcb->datos = dictionary_create(NULL);
+	pcb->d_funciones = dictionary_create(NULL);
+	pcb->d_etiquetas = dictionary_create(NULL);
+	pcb->stack = stack_create();
+	pcb->ultima_rafaga = 0;
+	return pcb;
+}
+
+void inicializar_pcb(t_pcb *pcb) {
+	int i = 0;
+	//primer recorrido para cargar estructuras del PCB
+	//ID, PC, DATOS, STACK, CODIGO -- DICCIONARIO DE FUNCIONES, DICCIONARIO DE ETIQUETAS
+	while (pcb->codigo[i] != NULL) {
+		string_trim(&pcb->codigo[i]);
+		if (!es_un_comentario(pcb->codigo[i])) {
+			#define SEPARADOR_PALABRAS ' '
+			char ** palabra = string_tokens(pcb->codigo[i], SEPARADOR_PALABRAS);
+			if (string_equals_ignore_case(palabra[0], "variables")) {
+				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
+			} else if (string_equals_ignore_case(palabra[0],
+					"comienzo_programa")) {
+				pcb->program_counter = i + 1;
+				printf("El programa comienza en la linea %d\n", pcb->program_counter);
+			} else if (string_equals_ignore_case(palabra[0],
+					"comienzo_funcion")) {
+				cargar_funciones_en_diccionario(pcb->d_funciones, palabra[1],
+						(void *) i);
+				printf("La funcion %s empieza en la linea %d\n", palabra[1], i);
+			} else if ((index(palabra[0], ':')) != NULL) {
+				cargar_etiquetas_en_diccionario(pcb->d_etiquetas, palabra[0],
+						(void *) i);
+				printf("La etiqueta %s esta en la linea %d\n", palabra[0], i);
+			}
+		}
+		i++;
+	}
+	pcb->valor_estimacion_anterior = i;
+}
+
+
+
+int ejecutarPcb(t_pcb *pcb) {
+	inicializar_pcb(pcb);
+	registrarSignalListener();
+        while(1) {
+            if(procesar(pcb) == 0) {
+				break;
+			}
+            if(hayQueSuspenderProceso) {
+                suspender(pcb);
+                hayQueSuspenderProceso = 0;
+            }
+        }
+	// fixme: alguien tiene que cerrar el socket
+	eliminar_estructuras(pcb);
+	return EXIT_SUCCESS;
+}
+
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
 
 //	char * programa =
@@ -188,11 +251,18 @@ void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
  * Aca se van a cargar/modificar los valores de las variables, el stack, etc.
  */
 // todo: ponerle las condiciones que corresponden al while
-void procesar(t_pcb * pcb) {
+int procesar(t_pcb * pcb) {
 	pcb->ultima_rafaga = 0;
 	// FIXME: este sleep() es CUALQUIERA
-	while(ejecutarInstruccion(pcb) && sleep(2) && !hayQueSuspenderProceso);
+	while(!hayQueSuspenderProceso){
+		 if(ejecutarInstruccion(pcb) == 0) {
+			 printf("TerminoooooooooooooOOOO\n");
+			 return 0;
+		 }
+		 sleep(1);
+	}
 	printf("lineas ejecutadas por el proceso: %d\n",pcb->ultima_rafaga);
+	return 1;
 }
 
 void eliminar_estructuras(t_pcb * pcb) {
@@ -212,6 +282,7 @@ uint32_t ejecutarInstruccion(t_pcb * pcb) {
         printf("Procesando la instruccion %d: << %s >>\n", pc, instruccion);
 	if (es_fin_programa(instruccion)) {
 		valor_ejecucion = 0;
+		// FIXME: aca hay que cortar la ejecucion!!!
 	} else if (es_funcion(pcb, instruccion)) {
 		procesar_funcion(pcb,instruccion);
 	} else if(es_fin_funcion(instruccion)){
@@ -263,6 +334,7 @@ int es_un_salto(char * instruccion){
 }
 
 void procesar_funcion(t_pcb * pcb, char * instruccion){
+	printf("Entro a la funcion %s en la linea %d\n", instruccion, pcb->program_counter);
 	t_registro_stack *registro_stack = malloc(sizeof(t_registro_stack));
 	registro_stack->nombre_funcion = calloc(1,strlen(instruccion) + 1);
 	registro_stack->retorno=pcb->program_counter;
@@ -272,6 +344,7 @@ void procesar_funcion(t_pcb * pcb, char * instruccion){
 }
 
 void procesar_fin_funcion(t_pcb * pcb,char * instruccion){
+	printf("Salgo de la funcion %s en la linea %d\n", instruccion, pcb->program_counter);
 	t_registro_stack *registro_stack = (t_registro_stack *) stack_pop(pcb->stack);
 	pcb->program_counter = registro_stack->retorno;
 	free(registro_stack->nombre_funcion);

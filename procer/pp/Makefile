@@ -1,8 +1,10 @@
 C_SRCS = ./pp.c \
-	 ./parser.c
+	 ./parser.c \
+	 ./server.c
 
 OBJS = ./build/pp.o \
-       ./build/parser.o
+       ./build/parser.o \
+       ./build/server.o
 
 all: build/pp
 

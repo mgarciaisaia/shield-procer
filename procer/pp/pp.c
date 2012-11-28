@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include "parser.h"
+#include "server.h"
 
 
 #define ERROR_BINDED 1
@@ -12,7 +13,10 @@
 #define ERROR_SEND_PID 3
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
+	t_dictionary *tabla_procesos = dictionary_create(NULL);
     printf("Iniciado PROCER con PID %d\n", getpid());
+	lts(tabla_procesos);
+	return 0;
     int socket = socket_binded(23456);
     if(socket < 0) {
         printf("Error %d bindeando el socket: %s\n", errno, strerror(errno));

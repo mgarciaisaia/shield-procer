@@ -41,12 +41,14 @@ typedef struct {
 } t_registro_stack;
 
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
+int ejecutarPcb(t_pcb *programa);
 t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);
+t_pcb *nuevo_pcb(int id_proceso);
 int es_un_comentario(char *);
 void cargar_variables_en_diccionario(t_dictionary *, char *);
 void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);
 void cargar_etiquetas_en_diccionario(t_dictionary *, char *, void *);
-void procesar(t_pcb * pcb);
+int procesar(t_pcb * pcb);
 void eliminar_estructuras(t_pcb *);
 uint32_t ejecutarInstruccion(t_pcb *);
 
