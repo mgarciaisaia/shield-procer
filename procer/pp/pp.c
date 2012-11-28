@@ -12,6 +12,15 @@
 
 
 void *pendientes_nuevos(void *nada) {
+	int valor;
+	while(1){
+		t_pcb * pcb = sync_queue_pop(cola_pendientes_nuevos);
+		sem_wait(mmp);
+		sync_queue_push(cola_nuevos,pcb);
+		sem_getvalue(mmp,&valor);
+		//todo: loguear
+		printf("agregue un pcb: %d\n", valor);
+	}
 	return NULL;
 }
 
@@ -68,7 +77,7 @@ int main(void) {
     void *input = NULL;
     int inputLenght = socket_receive(querySocket, &input);
     if(inputLenght != sizeof(uint8_t)) {
-	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %z\n", querySocket, inputLenght, sizeof(uint8_t));
+	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %zd\n", querySocket, inputLenght, sizeof(uint8_t));
 	    free(input);
 	    exit(ERROR_RECEIVE_PRIORITY);
     }
