@@ -138,7 +138,8 @@ void *lts(void *nada) {
 						t_pcb *pcb = nuevo_pcb(newfd);
 						dictionary_put(tabla_procesos, pidString, pcb);
 						free(pidString);
-						socket_send(newfd, &newfd, sizeof (newfd));
+						uint64_t pid = newfd;
+						socket_send(newfd, &pid, sizeof (pid));
 					}
 				} else {
 					// handle data from a client

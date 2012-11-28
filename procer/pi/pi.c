@@ -1,4 +1,6 @@
 #define _GNU_SOURCE
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
@@ -55,7 +57,7 @@ int main(int argc, char* argv[]) {
         
         free(remote_address);
         
-        int *pid = NULL;
+        uint64_t *pid = NULL;
         int bytesRecibidos = socket_receive(conexion, (void*)&pid);
         if(bytesRecibidos <= 0) {
             perror("Error recibiendo el PID del proceso");
@@ -63,7 +65,7 @@ int main(int argc, char* argv[]) {
         }
         
 	char *nombreArchivoLog = NULL;
-        asprintf(&nombreArchivoLog, "PI.[%d].log", *pid);
+        asprintf(&nombreArchivoLog, "PI.[%PRIu64].log", *pid);
         
         t_log *log = log_create(nombreArchivoLog, "PI", 1, LOG_LEVEL_TRACE);
         free(nombreArchivoLog);
