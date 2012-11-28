@@ -375,7 +375,8 @@ void list_sort(t_list *self, bool (*comparator)(void *, void *)) {
     t_link_element *auxiliar = NULL;
     bool sorted = true;
     do {
-        t_link_element *previous_element = self->head, *cursor = previous_element->next;
+        t_link_element *previous_element = self->head;
+        t_link_element *cursor = previous_element->next;
         sorted = true;
         int index = 0, last_changed = unsorted_elements;
         while(index < unsorted_elements && cursor != NULL) {

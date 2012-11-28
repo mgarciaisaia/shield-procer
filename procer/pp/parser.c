@@ -451,15 +451,21 @@ double calcular_rafaga(double valor_estimacion_anterior, double ultima_rafaga) {
 	return FACTOR_AJUSTE_SPN * ultima_rafaga + (1 - FACTOR_AJUSTE_SPN) * valor_estimacion_anterior;
 }
 
-int es_primer_pcb_mas_antiguo(t_reg_listos * reg_1, t_reg_listos * reg_2){
+bool es_primer_pcb_mas_antiguo(void * reg_void_1, void * reg_void_2){
+	t_reg_listos * reg_1 = (t_reg_listos *)reg_void_1;
+	t_reg_listos * reg_2 = (t_reg_listos *)reg_void_2;
 	return reg_1->tiempo_entrada_listos < reg_2->tiempo_entrada_listos;
 }
 
-int es_primer_pcb_de_menor_prioridad(t_reg_listos * reg_1, t_reg_listos * reg_2){
+bool es_primer_pcb_de_menor_prioridad(void * reg_void_1, void * reg_void_2){
+	t_reg_listos * reg_1 = (t_reg_listos *)reg_void_1;
+	t_reg_listos * reg_2 = (t_reg_listos *)reg_void_2;
 	return reg_1->pcb->prioridad < reg_2->pcb->prioridad;
 }
 
-int es_primer_pcb_de_rafaga_mas_corta(t_reg_listos * reg_1, t_reg_listos * reg_2){
+bool es_primer_pcb_de_rafaga_mas_corta(void * reg_void_1, void * reg_void_2){
+	t_reg_listos * reg_1 = (t_reg_listos *)reg_void_1;
+	t_reg_listos * reg_2 = (t_reg_listos *)reg_void_2;
 	double estimacion_rafaga_reg_1 = calcular_rafaga(reg_1->pcb->valor_estimacion_anterior,
 												reg_1->pcb->ultima_rafaga);
 	double estimacion_rafaga_reg_2 = calcular_rafaga(reg_2->pcb->valor_estimacion_anterior,

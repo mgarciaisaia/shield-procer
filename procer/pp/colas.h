@@ -19,10 +19,12 @@ extern t_sync_queue *cola_fin_bloqueados;
 extern t_sync_queue *cola_suspendidos;
 extern t_dictionary *tabla_procesos;
 extern sem_t * mmp;
-
+extern t_list *lista_auxiliar_prioridades;
+extern bool (* algoritmo_ordenamiento)(void *, void *);
 
 void colas_initialize(void);
 
+void cargar_lista_auxiliar_prioridades(void);
 
 void *sacasaca(void *nada);
 

@@ -16,10 +16,13 @@ t_sync_queue *cola_suspendidos;
 t_dictionary *tabla_procesos;
 sem_t * mmp;
 
+t_list * lista_auxiliar_prioridades;
+bool (* algoritmo_ordenamiento)(void *, void *);
+
 void colas_initialize() {
 
 	mmp = malloc(sizeof(sem_t));
-	sem_init(mmp,0,2);
+	sem_init(mmp,0,3);
 
 	cola_pendientes_nuevos = sync_queue_create();
 	cola_nuevos = sync_queue_create();
@@ -32,6 +35,8 @@ void colas_initialize() {
 	cola_suspendidos = sync_queue_create();
 
 	tabla_procesos = dictionary_create(NULL);
+
+	cargar_lista_auxiliar_prioridades();
 }
 
 
@@ -40,4 +45,13 @@ void *sacasaca(void *nada) {
 		sync_queue_pop(cola_pendientes_nuevos);
 		printf("Saque uno de nuevos!\n");
 	}
+	return NULL;
+}
+
+void cargar_lista_auxiliar_prioridades(void){
+	lista_auxiliar_prioridades = list_create();
+	list_add(lista_auxiliar_prioridades,cola_nuevos);
+	list_add(lista_auxiliar_prioridades,cola_suspendidos);
+	list_add(lista_auxiliar_prioridades,cola_fin_bloqueados);
+	list_add(lista_auxiliar_prioridades,cola_fin_quantum);
 }

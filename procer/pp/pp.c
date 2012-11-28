@@ -9,7 +9,7 @@
 #include "colas.h"
 #include <pthread.h>
 #include "commons/collections/list.h"
-
+#include <sys/time.h>
 
 void *pendientes_nuevos(void *nada) {
 	int valor;
@@ -24,6 +24,12 @@ void *pendientes_nuevos(void *nada) {
 	return NULL;
 }
 
+void * sts(void *);
+void encolar_en_listos(void);
+void encolar_lap_en_ll(void *);
+uint32_t no_encontro_pcb;
+
+
 #define ERROR_BINDED 1
 #define ERROR_LISTEN 2
 #define ERROR_SEND_PID 3
@@ -32,8 +38,8 @@ int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
 	
-    #define THREAD_COUNT 2
-	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos };
+    #define THREAD_COUNT 3
+	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts};
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
@@ -97,3 +103,34 @@ int main(void) {
     return (EXIT_SUCCESS);
 }
 
+void * sts(void * nada) {
+	while(1){
+		encolar_en_listos();
+	}
+	return NULL;
+}
+
+void encolar_en_listos(){
+	no_encontro_pcb = 1; //PARA PODER SACAR SOLO UN ELEMENTO DE LA LISTAS DE PRIORIDADES
+	list_iterate(lista_auxiliar_prioridades,encolar_lap_en_ll);
+}
+
+void encolar_lap_en_ll(void * reg_lista_void){
+	t_sync_queue * sync_queue = reg_lista_void;
+	if(!sync_queue_is_empty(sync_queue) && no_encontro_pcb){
+		no_encontro_pcb = 0;
+		t_pcb * pcb = sync_queue_pop(sync_queue);
+
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		double time_in_usec = (tv.tv_sec) * 1000000 + (tv.tv_usec);
+		t_reg_listos * registro_listos = malloc(sizeof(t_reg_listos));
+		registro_listos->pcb = pcb;
+		registro_listos->tiempo_entrada_listos = time_in_usec;
+		//todo: tener un ptr_a_funcion que me apunta al algoritmo de ordenamiento correspondiente
+		//se usaría como 3er parámetro de sync_queue_ordered_insert
+
+		sync_queue_ordered_insert(cola_listos,registro_listos,es_primer_pcb_mas_antiguo);
+		printf("agarro uno de lista auxiliar de prioridades\n");
+	}
+}
