@@ -8,7 +8,12 @@
 #include "server.h"
 #include "colas.h"
 #include <pthread.h>
+#include "commons/collections/list.h"
 
+
+void *pendientes_nuevos(void *nada) {
+	return NULL;
+}
 
 #define ERROR_BINDED 1
 #define ERROR_LISTEN 2
@@ -17,13 +22,27 @@
 int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
-	pthread_t thread_lts, thread_consume;
-	void *nada;
-	pthread_create(&thread_lts, NULL, lts, NULL);
-	pthread_create(&thread_consume, NULL, sacasaca, NULL);
 	
-	pthread_join(thread_lts, &nada);
-	pthread_join(thread_consume, &nada);
+    #define THREAD_COUNT 2
+	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos };
+	t_list *threads = list_create();
+	pthread_t *thread;
+	int index;
+	for(index = 0; index < THREAD_COUNT; index++) {
+		thread = malloc(sizeof(pthread_t));
+	
+		pthread_create(thread, NULL, funciones_existentes[index], NULL);
+		list_add(threads, thread);
+	}
+	
+	void *nada;
+	
+	void joinear_thread(void *thread) {
+		pthread_join(*(pthread_t *)thread, &nada);
+		free(thread);
+	}
+	
+	list_iterate(threads, joinear_thread);
 	return 0;
     int socket = socket_binded(23456);
     if(socket < 0) {
