@@ -2,6 +2,7 @@
  ** selectserver.c -- a cheezy multiperson chat server
  */
 #define _GNU_SOURCE
+#include "colas.h"
 #include "server.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,6 +16,8 @@
 #include "commons/network.h"
 #include "parser.h"
 #include "commons/collections/dictionary.h"
+#include "commons/collections/list.h"
+#include "commons/collections/sync_queue.h"
 #include "commons/string.h"
 
 #define PORT "23456"   // port we're listening on
@@ -29,7 +32,7 @@ void *get_in_addr(struct sockaddr *sa) {
 	return &(((struct sockaddr_in6*) sa)->sin6_addr);
 }
 
-int lts(t_dictionary *tabla_procesos) {
+int lts() {
 	fd_set master; // master file descriptor list
 	fd_set read_fds; // temp file descriptor list for select()
 	int fdmax; // maximum file descriptor number
@@ -161,7 +164,8 @@ int lts(t_dictionary *tabla_procesos) {
 							pcb->prioridad = (uint8_t) *buf;
 						} else if(pcb->codigo == NULL) {
 							pcb->codigo = string_tokens(buf, '\n');
-							ejecutarPcb(pcb);
+							inicializar_pcb(pcb);
+							sync_queue_push(cola_pendientes_nuevos, pcb);
 						} else {
 							printf("Espero que esto sea un pedido de reanudar ejecucion: %.*s\n", nbytes, buf);
 						}

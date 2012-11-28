@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include "parser.h"
 #include "server.h"
+#include "colas.h"
 
 
 #define ERROR_BINDED 1
@@ -13,9 +14,9 @@
 #define ERROR_SEND_PID 3
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
-	t_dictionary *tabla_procesos = dictionary_create(NULL);
     printf("Iniciado PROCER con PID %d\n", getpid());
-	lts(tabla_procesos);
+	colas_initialize();
+	lts();
 	return 0;
     int socket = socket_binded(23456);
     if(socket < 0) {
@@ -41,7 +42,7 @@ int main(void) {
     void *input = NULL;
     int inputLenght = socket_receive(querySocket, &input);
     if(inputLenght != sizeof(uint8_t)) {
-	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %d\n", querySocket, inputLenght, sizeof(uint8_t));
+	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %z\n", querySocket, inputLenght, sizeof(uint8_t));
 	    free(input);
 	    exit(ERROR_RECEIVE_PRIORITY);
     }

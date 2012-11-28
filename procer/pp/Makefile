@@ -1,10 +1,12 @@
 C_SRCS = ./pp.c \
 	 ./parser.c \
-	 ./server.c
+	 ./server.c \
+	 ./colas.c
 
 OBJS = ./build/pp.o \
        ./build/parser.o \
-       ./build/server.o
+       ./build/server.o \
+       ./build/colas.o
 
 all: build/pp
 
@@ -12,7 +14,7 @@ dependents:
 	-cd ../commons/ && make all
 
 build/pp: dependents create-dirs $(OBJS)
-	gcc -L"../commons/build" -o "build/pp" $(OBJS) -lcommons
+	gcc -L"../commons/build" -o "build/pp" $(OBJS) -lcommons -pthread
 
 create-dirs:
 	mkdir -p build
