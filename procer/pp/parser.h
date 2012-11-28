@@ -71,7 +71,7 @@ void imprimir(int pid, char *, uint32_t);
 //= FUNCIONES PARA ORDENAR LA LISTA DE LISOTS =
 //=============================================
 
-double calcular_rafaga(double, double);
 int es_primer_pcb_mas_antiguo(t_reg_listos *, t_reg_listos *);
-int es_primer_pcb_de_mayor_prioridad(t_reg_listos *, t_reg_listos *);
+double calcular_rafaga(double, double);
+int es_primer_pcb_de_menor_prioridad(t_reg_listos *, t_reg_listos *);
 int es_primer_pcb_de_rafaga_mas_corta(t_reg_listos *, t_reg_listos *);

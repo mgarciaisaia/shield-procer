@@ -320,7 +320,6 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion){
 			sentencia = &sentencia[1];
 		}
 		if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
-			// todo: Encapsular en función, igual comportamiento
 			char * separador = (index(sentencia,'+') != NULL) ? "+" : "-";
 			long int valor_variable_0;
 			long int valor_variable_1;
@@ -383,7 +382,7 @@ int es_primer_pcb_mas_antiguo(t_reg_listos * reg_1, t_reg_listos * reg_2){
 	return reg_1->tiempo_entrada_listos < reg_2->tiempo_entrada_listos;
 }
 
-int es_primer_pcb_de_mayor_prioridad(t_reg_listos * reg_1, t_reg_listos * reg_2){
+int es_primer_pcb_de_menor_prioridad(t_reg_listos * reg_1, t_reg_listos * reg_2){
 	return reg_1->pcb->prioridad < reg_2->pcb->prioridad;
 }
 
