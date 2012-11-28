@@ -32,8 +32,7 @@ typedef struct {
 typedef struct {
 	t_pcb * pcb;
 	double tiempo_entrada_listos;
-	uint32_t prioridad;
-} t_reg_prueba;
+} t_reg_listos;
 
 typedef struct {
 	uint32_t retorno;
@@ -70,11 +69,11 @@ void procesar_asignacion(t_pcb *, char *);
 void posicionarse_proxima_instruccion_ejecutable(t_pcb *);
 void imprimir(int pid, char *, uint32_t);
 
-//================================================================================
-//= FUNCIONES PARA PEDIR ELEMENTOS DE LA PILA DE ACUERDO AL TIPO DE ORDENAMIENTO =
-//================================================================================
+//=============================================
+//= FUNCIONES PARA ORDENAR LA LISTA DE LISOTS =
+//=============================================
 
-t_reg_prueba * dame_elemento_mas_antiguo(t_list *);
-t_reg_prueba * dame_elemento_mayor_prioridad(t_list *);
-t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list *);
+int es_primer_pcb_mas_antiguo(t_reg_listos *, t_reg_listos *);
 double calcular_rafaga(double, double);
+int es_primer_pcb_de_menor_prioridad(t_reg_listos *, t_reg_listos *);
+int es_primer_pcb_de_rafaga_mas_corta(t_reg_listos *, t_reg_listos *);

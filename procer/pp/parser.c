@@ -393,7 +393,6 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion){
 			sentencia = &sentencia[1];
 		}
 		if((index(sentencia,'+') != NULL) || (index(sentencia,'-') != NULL)){
-			// todo: Encapsular en función, igual comportamiento
 			char * separador = (index(sentencia,'+') != NULL) ? "+" : "-";
 			long int valor_variable_0;
 			long int valor_variable_1;
@@ -447,57 +446,23 @@ void imprimir(int pid, char * variable, uint32_t valor) {
     free(mensaje);
 }
 
-//================================================================================
-//= FUNCIONES PARA PEDIR ELEMENTOS DE LA PILA DE ACUERDO AL TIPO DE ORDENAMIENTO =
-//================================================================================
-
-t_reg_prueba * dame_elemento_mas_antiguo(t_list * lista){
-	t_reg_prueba * reg_prueba_mas_antigua = list_get(lista,0);
-	int i;
-	int indice_reg_mas_antigua;
-	for(i = 0,indice_reg_mas_antigua = 0;i < list_size(lista);i++){
-		t_reg_prueba * reg_prueba = list_get(lista,i);
-		if(reg_prueba_mas_antigua->tiempo_entrada_listos > reg_prueba->tiempo_entrada_listos){
-			reg_prueba_mas_antigua = reg_prueba;
-			indice_reg_mas_antigua = i;
-		}
-	}
-	return list_remove(lista,indice_reg_mas_antigua);
-}
-
-t_reg_prueba * dame_elemento_mayor_prioridad(t_list * lista){
-	t_reg_prueba * reg_prueba_mayor_prioridad = list_get(lista,0);
-	int i;
-	int indice_reg_mas_antigua;
-	for(i = 0,indice_reg_mas_antigua = 0;i < list_size(lista);i++){
-		t_reg_prueba * reg_prueba = list_get(lista,i);
-		if(reg_prueba_mayor_prioridad->prioridad < reg_prueba->prioridad){
-			reg_prueba_mayor_prioridad = reg_prueba;
-			indice_reg_mas_antigua = i;
-		}
-	}
-	return list_remove(lista,indice_reg_mas_antigua);
-}
-
-t_reg_prueba * dame_elemento_rafaga_mas_corta(t_list * lista){
-	t_reg_prueba * reg_prueba_rafaga_mas_corta = list_get(lista,0);
-	int i;
-	int indice_reg_rafaga_mas_corta;
-	double estimacion_rafaga_reg_rafaga_mas_corta = calcular_rafaga(reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior,
-												reg_prueba_rafaga_mas_corta->pcb->ultima_rafaga);
-	for(i = 0,indice_reg_rafaga_mas_corta = 0;i < list_size(lista);i++){
-		t_reg_prueba * reg_prueba = list_get(lista,i);
-		double estimacion_rafaga = calcular_rafaga(reg_prueba->pcb->valor_estimacion_anterior, reg_prueba->pcb->ultima_rafaga);
-		if(estimacion_rafaga_reg_rafaga_mas_corta > estimacion_rafaga){
-			estimacion_rafaga_reg_rafaga_mas_corta = estimacion_rafaga;
-			reg_prueba_rafaga_mas_corta = reg_prueba;
-			reg_prueba_rafaga_mas_corta->pcb->valor_estimacion_anterior = estimacion_rafaga;
-			indice_reg_rafaga_mas_corta = i;
-		}
-	}
-	return list_remove(lista,indice_reg_rafaga_mas_corta);
-}
 
 double calcular_rafaga(double valor_estimacion_anterior, double ultima_rafaga) {
 	return FACTOR_AJUSTE_SPN * ultima_rafaga + (1 - FACTOR_AJUSTE_SPN) * valor_estimacion_anterior;
+}
+
+int es_primer_pcb_mas_antiguo(t_reg_listos * reg_1, t_reg_listos * reg_2){
+	return reg_1->tiempo_entrada_listos < reg_2->tiempo_entrada_listos;
+}
+
+int es_primer_pcb_de_menor_prioridad(t_reg_listos * reg_1, t_reg_listos * reg_2){
+	return reg_1->pcb->prioridad < reg_2->pcb->prioridad;
+}
+
+int es_primer_pcb_de_rafaga_mas_corta(t_reg_listos * reg_1, t_reg_listos * reg_2){
+	double estimacion_rafaga_reg_1 = calcular_rafaga(reg_1->pcb->valor_estimacion_anterior,
+												reg_1->pcb->ultima_rafaga);
+	double estimacion_rafaga_reg_2 = calcular_rafaga(reg_2->pcb->valor_estimacion_anterior,
+												reg_2->pcb->ultima_rafaga);
+	return estimacion_rafaga_reg_1 < estimacion_rafaga_reg_2;
 }

@@ -395,3 +395,21 @@ void list_sort(t_list *self, bool (*comparator)(void *, void *)) {
     
 }
 
+/*
+ * NOTA: LA LISTA DEBERÍA ESTAR PREVIAMENTE ORDENADA POR UN list_sort
+ */
+
+void list_ordered_insert(t_list * self, void * input_element, bool (*comparator)(void *, void *)){
+    int i;
+    int no_inserto = 1;
+    for(i=0;i < list_size(self) && no_inserto;i++){
+    	void * element = list_get(self,i);
+    	if(comparator(input_element,element)){
+    		list_add_in_index(self,i,input_element);
+    		no_inserto = 0;
+    	}
+    }
+    if(no_inserto){
+    	list_add(self,input_element);
+    }
+}
