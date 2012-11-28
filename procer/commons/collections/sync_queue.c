@@ -4,6 +4,7 @@
 #include <semaphore.h>
 #include "list.h"
 #include "sync_queue.h"
+#include <stdbool.h>
 
 t_sync_queue *sync_queue_create(void) {
 	t_sync_queue *new = malloc(sizeof(t_sync_queue));
@@ -61,4 +62,17 @@ int sync_queue_size(t_sync_queue *self) {
 
 int sync_queue_is_empty(t_sync_queue *self) {
 	return sync_queue_size(self) == 0;
+}
+
+void sync_queue_sort(t_sync_queue *self, bool (*comparator)(void *, void *)) {
+	pthread_mutex_lock(self->mutex);
+	list_sort(self->queue, comparator);
+	pthread_mutex_unlock(self->mutex);
+}
+
+void sync_queue_ordered_insert(t_sync_queue *self, void *element, bool (*comparator)(void *, void *)) {
+	pthread_mutex_lock(self->mutex);
+	list_ordered_insert(self->queue, element, comparator);
+	sem_post(self->semaphore);
+	pthread_mutex_unlock(self->mutex);
 }

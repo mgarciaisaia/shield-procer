@@ -403,6 +403,7 @@ void list_ordered_insert(t_list * self, void * input_element, bool (*comparator)
     int i;
     int no_inserto = 1;
     for(i=0;i < list_size(self) && no_inserto;i++){
+		// TODO: evitar el list_get() para mejorar performance
     	void * element = list_get(self,i);
     	if(comparator(input_element,element)){
     		list_add_in_index(self,i,input_element);

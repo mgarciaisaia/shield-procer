@@ -8,6 +8,7 @@ extern "C" {
 	#include "list.h"
 	#include <semaphore.h>
 	#include <pthread.h>
+	#include <stdbool.h>
 
 	typedef struct {
 		t_list *queue;
@@ -25,6 +26,10 @@ extern "C" {
 	
 	int sync_queue_size(t_sync_queue *);
 	int sync_queue_is_empty(t_sync_queue *);
+	
+	// FIXME: BANG! queue_sort? Alguien quiere por favor pensar en los FIFOs??!? :)
+	void sync_queue_sort(t_sync_queue *self, bool (*comparator)(void *, void *));
+	void sync_queue_ordered_insert(t_sync_queue *, void *, bool (*)(void *, void *));
 
 #ifdef	__cplusplus
 }
