@@ -17,6 +17,7 @@ extern t_sync_queue *cola_fin_quantum;
 extern t_sync_queue *cola_bloqueados;
 extern t_sync_queue *cola_fin_bloqueados;
 extern t_sync_queue *cola_suspendidos;
+extern t_sync_queue *cola_fin_programa;
 extern t_dictionary *tabla_procesos;
 extern sem_t * mmp;
 extern t_list *lista_auxiliar_prioridades;
