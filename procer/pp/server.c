@@ -21,6 +21,7 @@
 #include "commons/string.h"
 
 #define PORT "23456"   // port we're listening on
+#define ERROR_MPS "Error - se alcanzo el maximo de procesos en el sistema (MPS)"
 
 // get sockaddr, IPv4 or IPv6:
 
@@ -133,6 +134,12 @@ void *lts(void *nada) {
 								get_in_addr((struct sockaddr*) &remoteaddr),
 								remoteIP, INET6_ADDRSTRLEN),
 								newfd);
+						if(sem_trywait(mps)) {
+							// no hay mps disponible
+							socket_send(newfd, ERROR_MPS, strlen(ERROR_MPS));
+							printf("Descarto una conexion en %d porque no tengo mas MPS\n", newfd);
+							close(newfd);
+						}
 						char *pidString;
 						asprintf(&pidString, "%d", newfd);
 						t_pcb *pcb = nuevo_pcb(newfd);

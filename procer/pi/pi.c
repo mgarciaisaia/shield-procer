@@ -17,6 +17,7 @@
 #define NO_PP_IP 2
 #define NO_PP_PUERTO 3
 #define ERROR_SENDFILE 4
+#define ERROR_MPS 5
 
 int main(int argc, char* argv[]) {
 	if(argc != 2) {
@@ -62,7 +63,10 @@ int main(int argc, char* argv[]) {
         if(bytesRecibidos <= 0) {
             perror("Error recibiendo el PID del proceso");
             exit(errno);
-        }
+        } else if(bytesRecibidos != sizeof(uint64_t)) {
+			printf("%.*s\n", bytesRecibidos, (char *)pid);
+			exit(ERROR_MPS);
+		}
         
 	char *nombreArchivoLog = NULL;
         asprintf(&nombreArchivoLog, "PI.[%PRIu64].log", *pid);

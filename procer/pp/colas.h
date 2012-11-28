@@ -22,6 +22,7 @@ extern t_dictionary *tabla_procesos;
 extern sem_t * mmp;
 extern t_list *lista_auxiliar_prioridades;
 extern bool (* algoritmo_ordenamiento)(void *, void *);
+sem_t *mps;
 
 void colas_initialize(void);
 

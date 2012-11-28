@@ -19,6 +19,7 @@ sem_t * mmp;
 
 t_list * lista_auxiliar_prioridades;
 bool (* algoritmo_ordenamiento)(void *, void *);
+sem_t *mps;
 
 void colas_initialize() {
 
@@ -37,6 +38,9 @@ void colas_initialize() {
 	cola_fin_programa = sync_queue_create();
 
 	tabla_procesos = dictionary_create(NULL);
+	mps = malloc(sizeof(sem_t));
+	// FIXME: parametrizar el 3
+	sem_init(mps, 0, 3);
 
 	cargar_lista_auxiliar_prioridades();
 }
