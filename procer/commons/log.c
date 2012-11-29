@@ -34,9 +34,9 @@
 #endif
 
 #define LOG_MAX_LENGTH_BUFFER LOG_MAX_LENGTH_MESSAGE + 100
-#define LOG_ENUM_SIZE 5
+#define LOG_ENUM_SIZE 6
 
-static char *enum_names[LOG_ENUM_SIZE] = {"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"};
+static char *enum_names[LOG_ENUM_SIZE] = {"TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "LSCH"};
 
 /**
  * Private Functions
@@ -161,6 +161,20 @@ void log_error(t_log* logger, const char* message_template, ...) {
 	va_list arguments;
 	va_start(arguments, message_template);
 	log_write_in_level(logger, LOG_LEVEL_ERROR, message_template, arguments);
+	va_end(arguments);
+}
+
+/**
+ * @NAME: log_lsch
+ * @DESC: Loguea un mensaje con el siguiente formato
+ *
+ * [LSCH] hh:mm:ss:mmmm PROCESS_NAME/(PID:TID): MESSAGE
+ *
+ */
+void log_lsch(t_log* logger, const char* message_template, ...) {
+	va_list arguments;
+	va_start(arguments, message_template);
+	log_write_in_level(logger, LOG_LEVEL_LSCH, message_template, arguments);
 	va_end(arguments);
 }
 
