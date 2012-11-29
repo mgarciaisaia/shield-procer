@@ -16,6 +16,7 @@ t_sync_queue *cola_suspendidos;
 t_sync_queue *cola_fin_programa;
 t_dictionary *tabla_procesos;
 sem_t * mmp;
+sem_t * semaforo_iot;
 
 t_list * lista_auxiliar_prioridades;
 bool (* algoritmo_ordenamiento)(void *, void *);
@@ -25,6 +26,9 @@ void colas_initialize() {
 
 	mmp = malloc(sizeof(sem_t));
 	sem_init(mmp,0,3);
+
+	semaforo_iot = malloc(sizeof(sem_t));
+	sem_init(semaforo_iot,0,1);
 
 	cola_pendientes_nuevos = sync_queue_create();
 	cola_nuevos = sync_queue_create();

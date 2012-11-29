@@ -20,6 +20,7 @@ extern t_sync_queue *cola_suspendidos;
 extern t_sync_queue *cola_fin_programa;
 extern t_dictionary *tabla_procesos;
 extern sem_t * mmp;
+extern sem_t * semaforo_iot;
 extern t_list *lista_auxiliar_prioridades;
 extern bool (* algoritmo_ordenamiento)(void *, void *);
 sem_t *mps;

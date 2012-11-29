@@ -56,6 +56,7 @@ void * sts(void *);
 void encolar_en_listos(void);
 void encolar_lap_en_ll(void *);
 void * procer(void *);
+void * lanzar_ios(void *);
 uint32_t no_encontro_pcb;
 
 
@@ -67,9 +68,9 @@ int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
 	
-    #define THREAD_COUNT 5
+    #define THREAD_COUNT 6
 	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
-		procer, finalizados };
+		procer, finalizados, lanzar_ios };
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
@@ -178,5 +179,24 @@ void * procer(void * nada){
 			instrucciones_ejecutadas++;
 		}
 	}
+	return NULL;
+}
+
+void * lanzar_ios(void * nada){
+	while(1){
+		void * registro_void_io = sync_queue_pop(cola_bloqueados);
+	//	printf("%d\n",registro_io->tiempo_acceso_io);
+		pthread_t * thr_ejecutar_io = malloc(sizeof(pthread_t));
+		pthread_create(thr_ejecutar_io,NULL,ejecutar_io,registro_void_io);
+	}
+	return NULL;
+}
+
+void * ejecutar_io(void * void_pcb_io){
+	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
+	sleep(registro_io->tiempo_acceso_io);
+	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
+	sem_post(semaforo_iot);
+	free(registro_io);
 	return NULL;
 }

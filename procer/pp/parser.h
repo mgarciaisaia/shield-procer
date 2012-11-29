@@ -11,6 +11,7 @@
 #include "commons/collections/list.h"
 #include <stdbool.h>
 
+
 typedef struct {
 	int id_proceso;
 	uint32_t program_counter;
@@ -39,6 +40,11 @@ typedef struct {
 	uint32_t retorno;
 	char * nombre_funcion;
 } t_registro_stack;
+
+typedef struct {
+	int tiempo_acceso_io;
+	t_pcb * pcb;
+} t_registro_io;
 
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
 int ejecutarPcb(t_pcb *programa);
@@ -83,3 +89,7 @@ bool es_primer_pcb_de_menor_prioridad(void *, void *);
 bool es_primer_pcb_de_rafaga_mas_corta(void *, void *);
 
 bool es_io_bloqueante(char * );
+int procesar_io(char*, t_pcb*, bool);
+int tiempo_ejecucion_io(char *);
+uint8_t es_bloqueante(char *);
+void * ejecutar_io(void *);

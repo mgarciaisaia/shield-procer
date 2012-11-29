@@ -32,8 +32,8 @@ void destruir_diccionario(void);
 void cargar_listas_en_diccionario(void);
 void inicializar_lista_auxiliar_prioridades(void);
 void cargar_listas_a_LAP(void);
-void encolar_en_listos(void);
-void encolar_lap_en_ll(void *);
+//void encolar_en_listos(void);
+//void encolar_lap_en_ll(void *);
 
 int sts(void);
 int procer(void);

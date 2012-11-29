@@ -181,10 +181,11 @@ void agregar_proceso(t_list * lista, pthread_mutex_t * sem_mutex, t_pcb *pcb) {
 	pthread_mutex_unlock(sem_mutex);
 }
 
-int procer(){
+void * procer(void * nada){
 	while(1){
 		t_pcb * pcb = sync_queue_pop(cola_listos);
 		// todo: INICIALIZAR QUANTUM SI SE NECESITA
 //		procesar(pcb);
 	}
+	return NULL;
 }
