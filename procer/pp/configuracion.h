@@ -10,6 +10,8 @@
 #include <semaphore.h>
 
 #define PATH_CONFIG "/home/utnso/Desarrollo/2012-2c-no-quiero-matarte-pero-si-me-obligas/procer/pp/archivo_configuracion.conf"
+#define EVENT_SIZE  ( sizeof (struct inotify_event) + 1000 )
+#define BUF_LEN     ( 1024 * EVENT_SIZE )
 
 void inicializar_configuracion(void);
 void asignar_parametros_que_cambian_en_tiempo_de_ejecucion(t_config *);

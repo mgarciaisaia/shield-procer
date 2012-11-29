@@ -13,6 +13,7 @@
 #include "commons/string.h"
 #include <sys/time.h>
 #include "configuracion.h"
+#include <sys/inotify.h>
 
 void *pendientes_nuevos(void *nada) {
 	int valor;
@@ -70,6 +71,7 @@ void encolar_en_listos(void);
 void encolar_lap_en_ll(void *);
 void * procer(void *);
 void * lanzar_ios(void *);
+void * monitorear_configuracion(void *);
 uint32_t no_encontro_pcb;
 
 
@@ -87,9 +89,9 @@ int main(void) {
 
 	registrarSignalListener();
 	
-    #define THREAD_COUNT 7
+    #define THREAD_COUNT 8
 	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
-		procer, finalizados, lanzar_ios, pendientes_reanudar };
+		procer, finalizados, lanzar_ios, pendientes_reanudar, monitorear_configuracion };
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
@@ -243,5 +245,63 @@ void * ejecutar_io(void * void_pcb_io){
 	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
 	sem_post(threads_iot);
 	free(registro_io);
+	return NULL;
+}
+
+
+void * monitorear_configuracion(void * nada){
+
+	char buffer[BUF_LEN];
+
+	// Al inicializar inotify este nos devuelve un descriptor de archivo
+	int file_descriptor = inotify_init();
+	if (file_descriptor < 0) {
+		perror("inotify_init");
+	}
+
+	// Creamos un monitor sobre un path indicando que eventos queremos escuchar
+	int watch_descriptor = inotify_add_watch(file_descriptor,PATH_CONFIG,IN_MODIFY);
+
+	while (1) {
+
+	// El file descriptor creado por inotify, es el que recibe la información sobre los eventos ocurridos
+	// para leer esta información el descriptor se lee como si fuera un archivo comun y corriente pero
+	// la diferencia esta en que lo que leemos no es el contenido de un archivo sino la información
+	// referente a los eventos ocurridos
+		int length = read(file_descriptor, buffer, BUF_LEN);
+		if (length < 0) {
+			perror("read");
+		}
+
+		int offset = 0;
+
+		// Luego del read buffer es un array de n posiciones donde cada posición contiene
+		// un eventos ( inotify_event ) junto con el nombre de este.
+		while (offset < length) {
+
+			// El buffer es de tipo array de char, o array de bytes. Esto es porque como los
+			// nombres pueden tener nombres mas cortos que 24 caracteres el tamaño va a ser menor
+			// a sizeof( struct inotify_event ) + 24.
+			struct inotify_event *event =
+					(struct inotify_event *) &buffer[offset];
+
+			if (event->mask & IN_MODIFY) {
+				if (event->mask & IN_ISDIR) {
+					printf("The directory %s was modified.\n", event->name);
+				} else {
+					printf("se produjo un cambio en el archivo de configuracion, volvio a cargar\n");
+					config = config_create(PATH_CONFIG);
+					asignar_parametros_que_cambian_en_tiempo_de_ejecucion(config);
+					config_destroy(config);
+					sync_queue_sort(cola_listos,algoritmo_ordenamiento);
+					//FIXME: preguntar para que entre una sola vez aca al modificar el archivo de conf
+				}
+			}
+			offset += sizeof(struct inotify_event) + event->len;
+		}
+	}
+	inotify_rm_watch(file_descriptor, watch_descriptor);
+	close(file_descriptor);
+
 	return NULL;
 }
