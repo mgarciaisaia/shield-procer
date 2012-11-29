@@ -31,8 +31,7 @@ void *finalizados(void *nada) {
 	while(1) {
 		t_pcb *pcb = sync_queue_pop(cola_fin_programa);
 		
-		char *pid;
-		asprintf(&pid, "%d", pcb->id_proceso);
+		char *pid = pid_string(pcb->id_proceso);
 		dictionary_remove(tabla_procesos, pid);
 		free(pid);
 		
@@ -67,6 +66,7 @@ uint32_t no_encontro_pcb;
 int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
+	registrarSignalListener();
 	
     #define THREAD_COUNT 6
 	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
@@ -169,12 +169,31 @@ void encolar_lap_en_ll(void * reg_lista_void){
 void * procer(void * nada){
 	while(1){
 		t_reg_listos * registro_listo = sync_queue_pop(cola_listos);
+		t_pcb *pcb = registro_listo->pcb;
+		free(registro_listo);
 		// todo: INICIALIZAR QUANTUM SI SE NECESITA
 		int instrucciones_ejecutadas = 0;
 		bool seguir_ejecutando = true;
 		while(seguir_ejecutando){
-			seguir_ejecutando = ejecutarInstruccion(registro_listo->pcb);
-			//fixme: chequear suspendido
+			seguir_ejecutando = ejecutarInstruccion(pcb);
+			if(seguir_ejecutando && hayQueSuspenderProceso) {
+				char *pid = pid_string(pcb->id_proceso);
+				printf("Suspendo el proceso %s\n", pid);
+				dictionary_put(tabla_suspendidos, pid, pcb);
+				free(pid);
+				
+				sem_post(mmp);
+				
+				// mensaje con 1 hace que el PI pida al usuario reanudar
+				char *mensaje = strdup("1");
+				concatenar_estado_pcb(&mensaje, pcb);
+				string_concat(&mensaje, "\n\nProceso suspendido\n");
+				
+				socket_send(pcb->id_proceso, mensaje, strlen(mensaje));
+				
+				hayQueSuspenderProceso = 0;
+				seguir_ejecutando = false;
+			}
 			//fixme: chequear quantum
 			instrucciones_ejecutadas++;
 		}

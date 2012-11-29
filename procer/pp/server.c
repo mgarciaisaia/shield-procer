@@ -141,11 +141,10 @@ void *lts(void *nada) {
 						if (newfd > fdmax) { // keep track of the max
 							fdmax = newfd;
 						}
-						char *pidString;
-						asprintf(&pidString, "%d", newfd);
 						t_pcb *pcb = nuevo_pcb(newfd);
-						dictionary_put(tabla_procesos, pidString, pcb);
-						free(pidString);
+						char *pidS = pid_string(pcb->id_proceso);
+						dictionary_put(tabla_procesos, pidS, pcb);
+						free(pidS);
 						uint64_t pid = newfd;
 						socket_send(newfd, &pid, sizeof (pid));
 					}
@@ -165,9 +164,8 @@ void *lts(void *nada) {
 					} else {
 						// we got some data from a client
 						printf("Lei esto en %d: <<%.*s>>\n", i, nbytes, (char *) buf);
-						char *pidString;
-						asprintf(&pidString, "%d", newfd);
-						t_pcb *pcb = dictionary_get(tabla_procesos, pidString);
+						char *pidS = pid_string(i);
+						t_pcb *pcb = dictionary_get(tabla_procesos, pidS);
 						
 						if(pcb->prioridad > 20) {
 							pcb->prioridad = (uint8_t) *buf;
@@ -176,9 +174,20 @@ void *lts(void *nada) {
 							inicializar_pcb(pcb);
 							sync_queue_push(cola_pendientes_nuevos, pcb);
 						} else {
-							printf("Espero que esto sea un pedido de reanudar ejecucion: %.*s\n", nbytes, buf);
+							if(strncmp("1REANUDARPROCESO", buf, strlen("1REANUDARPROCESO") + 1) == 0) {
+								printf("Reanudo el proceso %s\n", pidS);
+								pcb = dictionary_remove(tabla_suspendidos, pidS);
+								if(pcb == NULL) {
+									printf("Llego un pedido de reanudar un proceso no-suspendido\n");
+								} else {
+									printf("Tiro el pcb %d a pendientes_reanudar\n", pcb->id_proceso);
+									sync_queue_push(cola_pendientes_reanudar, pcb);
+								}
+							} else {
+								printf("Llego un mensaje cualquiera: %.*s\n", nbytes, buf);
+							}
 						}
-						free(pidString);
+						free(pidS);
 					}
 				} // END handle data from client
 			} // END got new incoming connection

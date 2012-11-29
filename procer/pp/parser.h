@@ -11,6 +11,7 @@
 #include "commons/collections/list.h"
 #include <stdbool.h>
 
+extern int hayQueSuspenderProceso;
 
 typedef struct {
 	int id_proceso;
@@ -48,6 +49,7 @@ typedef struct {
 
 int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
 int ejecutarPcb(t_pcb *programa);
+void registrarSignalListener();
 t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);
 t_pcb *nuevo_pcb(int id_proceso);
 void inicializar_pcb(t_pcb *pcb);
@@ -78,6 +80,8 @@ void procesar_asignacion(t_pcb *, char *);
 
 bool posicionarse_proxima_instruccion_ejecutable(t_pcb *);
 void imprimir(int pid, char *, uint32_t);
+
+char *pid_string(int pid);
 
 //=============================================
 //= FUNCIONES PARA ORDENAR LA LISTA DE LISOTS =

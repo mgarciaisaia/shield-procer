@@ -241,6 +241,12 @@ t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
 	return pcb;
 }
 
+char *pid_string(int pid) {
+	char *pidString;
+	asprintf(&pidString, "%d", pid);
+	return pidString;
+}
+
 int es_un_comentario(char * linea) {
 	return linea[0] == '#';
 }
