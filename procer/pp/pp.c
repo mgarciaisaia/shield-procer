@@ -26,6 +26,19 @@ void *pendientes_nuevos(void *nada) {
 	return NULL;
 }
 
+void *pendientes_reanudar(void *nada) {
+	int valor;
+	while(1){
+		t_pcb * pcb = sync_queue_pop(cola_pendientes_reanudar);
+		sem_wait(mmp);
+		sync_queue_push(cola_reanudar,pcb);
+		sem_getvalue(mmp,&valor);
+		//todo: loguear
+		printf("Pase el proceso %d de pendientes_reanudar a reanudar. MMP: %d\n", pcb->id_proceso, valor);
+	}
+	return NULL;
+}
+
 void *finalizados(void *nada) {
 	int contador;
 	while(1) {
@@ -68,9 +81,9 @@ int main(void) {
 	colas_initialize();
 	registrarSignalListener();
 	
-    #define THREAD_COUNT 6
+    #define THREAD_COUNT 7
 	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
-		procer, finalizados, lanzar_ios };
+		procer, finalizados, lanzar_ios, pendientes_reanudar };
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
