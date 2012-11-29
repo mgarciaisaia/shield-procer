@@ -431,7 +431,10 @@ void procesar_funcion_imprimir(t_pcb * pcb, char * instruccion) {
 }
 
 void procesar_salto(t_pcb * pcb, char * instruccion) {
-	char ** palabra = string_split(instruccion, " ");
+	char *retardo = strchr(instruccion, ';');
+	char *sin_retardo = strndup(instruccion, retardo - instruccion);
+
+	char ** palabra = string_split(sin_retardo, " ");
 	uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos, palabra[1]);
 	if (string_equals_ignore_case(palabra[0], "ssc")) {
 		if (valor_variable == 0) {
@@ -447,6 +450,11 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 					palabra[2]);
 			pcb->program_counter = dir_etiqueta;
 		}
+	}
+	
+	if(retardo != NULL) {
+		printf("Duermo %d en un salto\n", atoi(retardo + 1));
+		sleep(atoi(retardo + 1));
 	}
 }
 
