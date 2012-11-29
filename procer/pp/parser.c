@@ -475,31 +475,7 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 		operando = -1;
 		sentencia = &sentencia[1];
 	}
-	if ((index(sentencia, '+') != NULL) || (index(sentencia, '-') != NULL)) {
-		char * separador = (index(sentencia, '+') != NULL) ? "+" : "-";
-		long int valor_variable_0;
-		long int valor_variable_1;
-		char ** variable = string_split(sentencia, separador);
-		if (dictionary_has_key(pcb->datos, variable[0])) {
-			valor_variable_0 = (long int) dictionary_get(pcb->datos,
-					variable[0]);
-		} else {
-			valor_variable_0 = strtol(variable[0], NULL, 0);
-		}
-		if (dictionary_has_key(pcb->datos, variable[1])) {
-			valor_variable_1 = (long int) dictionary_get(pcb->datos,
-					variable[1]);
-		} else {
-			valor_variable_1 = strtol(variable[1], NULL, 0);
-		}
-		long int resultado_operacion =
-				(string_equals_ignore_case(separador, "+")) ?
-						(valor_variable_0 * operando) + valor_variable_1 :
-						(valor_variable_0 * operando) - valor_variable_1;
-		dictionary_remove(pcb->datos, valor_l);
-		dictionary_put(pcb->datos, strdup(valor_l),
-				(void *) resultado_operacion);
-	} else if (es_funcion_io(sentencia)) {
+	if (es_funcion_io(sentencia)) {
 // todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
 		printf("es una io");
 //				char ** sentencia_io_splitea do = string_split(sentencia,",");
@@ -507,10 +483,36 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 //				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
 		// pasar los parámetros para la función	io;
 	} else {
-		//  La sentencia es de una asignación simple de entero (ej. a=1)
-		long int valor = strtol(sentencia, NULL, 0) * operando;
-		dictionary_remove(pcb->datos, valor_l);
-		dictionary_put(pcb->datos, strdup(valor_l), (void *) valor);
+		if ((index(sentencia, '+') != NULL) || (index(sentencia, '-') != NULL)) {
+			char * separador = (index(sentencia, '+') != NULL) ? "+" : "-";
+			long int valor_variable_0;
+			long int valor_variable_1;
+			char ** variable = string_split(sentencia, separador);
+			if (dictionary_has_key(pcb->datos, variable[0])) {
+				valor_variable_0 = (long int) dictionary_get(pcb->datos,
+						variable[0]);
+			} else {
+				valor_variable_0 = strtol(variable[0], NULL, 0);
+			}
+			if (dictionary_has_key(pcb->datos, variable[1])) {
+				valor_variable_1 = (long int) dictionary_get(pcb->datos,
+						variable[1]);
+			} else {
+				valor_variable_1 = strtol(variable[1], NULL, 0);
+			}
+			long int resultado_operacion =
+					(string_equals_ignore_case(separador, "+")) ?
+							(valor_variable_0 * operando) + valor_variable_1 :
+							(valor_variable_0 * operando) - valor_variable_1;
+			dictionary_remove(pcb->datos, valor_l);
+			dictionary_put(pcb->datos, strdup(valor_l),
+					(void *) resultado_operacion);
+		} else {
+			//  La sentencia es de una asignación simple de entero (ej. a=1)
+			long int valor = strtol(sentencia, NULL, 0) * operando;
+			dictionary_remove(pcb->datos, valor_l);
+			dictionary_put(pcb->datos, strdup(valor_l), (void *) valor);
+		}
 	}
 }
 
