@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,6 +10,7 @@
 #include "colas.h"
 #include <pthread.h>
 #include "commons/collections/list.h"
+#include "commons/string.h"
 #include <sys/time.h>
 
 void *pendientes_nuevos(void *nada) {
@@ -20,6 +22,32 @@ void *pendientes_nuevos(void *nada) {
 		sem_getvalue(mmp,&valor);
 		//todo: loguear
 		printf("agregue un pcb: %d\n", valor);
+	}
+	return NULL;
+}
+
+void *finalizados(void *nada) {
+	int contador;
+	while(1) {
+		t_pcb *pcb = sync_queue_pop(cola_fin_programa);
+		
+		char *pid;
+		asprintf(&pid, "%d", pcb->id_proceso);
+		dictionary_remove(tabla_procesos, pid);
+		free(pid);
+		
+		sem_post(mps);
+		sem_getvalue(mps, &contador);
+		printf("elimine un pcb finalizado: %d\n", contador);
+		
+		char *mensaje_fin = strdup("0");
+		concatenar_estado_pcb(&mensaje_fin, pcb);
+		string_concat(&mensaje_fin, "\n\nProceso finalizado\n");
+		socket_send(pcb->id_proceso, mensaje_fin, strlen(mensaje_fin) + 1);
+		socket_send(pcb->id_proceso, "2", strlen("2") + 1);
+		shutdown(pcb->id_proceso, SHUT_WR);
+		
+		destruir_pcb(pcb);
 	}
 	return NULL;
 }
@@ -39,8 +67,9 @@ int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
 	colas_initialize();
 	
-    #define THREAD_COUNT 4
-	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts, procer};
+    #define THREAD_COUNT 5
+	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
+		procer, finalizados };
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;

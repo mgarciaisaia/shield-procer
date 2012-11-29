@@ -145,6 +145,14 @@ void inicializar_pcb(t_pcb *pcb) {
 }
 
 
+void destruir_pcb(t_pcb *pcb) {
+	dictionary_destroy(pcb->datos);
+	dictionary_destroy(pcb->d_funciones);
+	dictionary_destroy(pcb->d_etiquetas);
+	stack_destroy(pcb->stack);
+	free(pcb->codigo);
+	free(pcb);
+}
 
 int ejecutarPcb(t_pcb *pcb) {
 	inicializar_pcb(pcb);

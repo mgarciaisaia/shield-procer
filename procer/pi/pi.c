@@ -114,6 +114,11 @@ int main(int argc, char* argv[]) {
         char *receiveBuffer = NULL;
 	
 	while((bytesLeidos = socket_receive(conexion, (void**)&receiveBuffer)) > 0) {
+		if(*receiveBuffer == '2') {
+			// cerramos la conexion
+			free(receiveBuffer);
+			break;
+		}
 		confirmar = (*receiveBuffer == '1');
                 log_info(log, "%.*s", bytesLeidos - 1, receiveBuffer + 1);
                 free(receiveBuffer);
