@@ -461,33 +461,34 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	// todo: usar tiempo_ejecucion para cuando consuma el quantum
 	(pcb->ultima_rafaga)++;
-	char ** palabra = string_split(instruccion, "=");
-	char * valor_l = palabra[0];
-	char * sentencia = palabra[1];
-//			char * tiempo_ejecucion = "NULL";
-	if (index(instruccion, ';') != NULL) {
-		char ** derecha_asignacion = string_split(palabra[1], ";");
-//				tiempo_ejecucion = derecha_asignacion[1];
-		sentencia = derecha_asignacion[0];
-	}
-	int32_t operando = 1;
-	if (string_starts_with(sentencia, "-")) {
-		operando = -1;
-		sentencia = &sentencia[1];
-	}
-	if (es_funcion_io(sentencia)) {
+	char *retardo = strchr(instruccion, ';');
+	char *sentencia = strndup(instruccion, retardo - instruccion);
+
+	char ** subexpresiones = string_split(sentencia, "=");
+	char * variable_asignada = subexpresiones[0];
+	char * expresion = subexpresiones[1];
+
+
+	if (es_funcion_io(expresion)) {
 // todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
-		printf("es una io");
+		printf("es una io\n");
 //				char ** sentencia_io_splitea do = string_split(sentencia,",");
 //				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
 //				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
 		// pasar los parámetros para la función	io;
 	} else {
-		if ((index(sentencia, '+') != NULL) || (index(sentencia, '-') != NULL)) {
-			char * separador = (index(sentencia, '+') != NULL) ? "+" : "-";
+		
+		int32_t operando = 1;
+		if (string_starts_with(expresion, "-")) {
+			operando = -1;
+			expresion = &expresion[1];
+		}
+		
+		if ((index(expresion, '+') != NULL) || (index(expresion, '-') != NULL)) {
+			char * separador = (index(expresion, '+') != NULL) ? "+" : "-";
 			long int valor_variable_0;
 			long int valor_variable_1;
-			char ** variable = string_split(sentencia, separador);
+			char ** variable = string_split(expresion, separador);
 			if (dictionary_has_key(pcb->datos, variable[0])) {
 				valor_variable_0 = (long int) dictionary_get(pcb->datos,
 						variable[0]);
@@ -504,14 +505,19 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 					(string_equals_ignore_case(separador, "+")) ?
 							(valor_variable_0 * operando) + valor_variable_1 :
 							(valor_variable_0 * operando) - valor_variable_1;
-			dictionary_remove(pcb->datos, valor_l);
-			dictionary_put(pcb->datos, strdup(valor_l),
+			dictionary_remove(pcb->datos, variable_asignada);
+			dictionary_put(pcb->datos, strdup(variable_asignada),
 					(void *) resultado_operacion);
 		} else {
 			//  La sentencia es de una asignación simple de entero (ej. a=1)
-			long int valor = strtol(sentencia, NULL, 0) * operando;
-			dictionary_remove(pcb->datos, valor_l);
-			dictionary_put(pcb->datos, strdup(valor_l), (void *) valor);
+			long int valor = strtol(expresion, NULL, 0) * operando;
+			dictionary_remove(pcb->datos, variable_asignada);
+			dictionary_put(pcb->datos, strdup(variable_asignada), (void *) valor);
+		}
+		
+		if(retardo != NULL) {
+			printf("Duermo %d segundos por asignacion\n", atoi(retardo + 1));
+			sleep(atoi(retardo + 1));
 		}
 	}
 }
