@@ -124,10 +124,6 @@ void *lts(void *nada) {
 					if (newfd == -1) {
 						perror("accept");
 					} else {
-						FD_SET(newfd, &master); // add to master set
-						if (newfd > fdmax) { // keep track of the max
-							fdmax = newfd;
-						}
 						printf("selectserver: new connection from %s on "
 								"socket %d\n",
 								inet_ntop(remoteaddr.ss_family,
@@ -139,6 +135,11 @@ void *lts(void *nada) {
 							socket_send(newfd, ERROR_MPS, strlen(ERROR_MPS));
 							printf("Descarto una conexion en %d porque no tengo mas MPS\n", newfd);
 							close(newfd);
+							break;
+						}
+						FD_SET(newfd, &master); // add to master set
+						if (newfd > fdmax) { // keep track of the max
+							fdmax = newfd;
 						}
 						char *pidString;
 						asprintf(&pidString, "%d", newfd);
