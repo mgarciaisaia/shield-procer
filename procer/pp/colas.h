@@ -23,7 +23,7 @@ extern sem_t * mmp;
 extern sem_t * semaforo_iot;
 extern t_list *lista_auxiliar_prioridades;
 extern bool (* algoritmo_ordenamiento)(void *, void *);
-sem_t *mps;
+extern sem_t *mps;
 
 void colas_initialize(void);
 
