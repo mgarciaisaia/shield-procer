@@ -48,7 +48,6 @@ static bool isEnableLevelInLogger(t_log* logger, t_log_level level);
  * Public Functions
  */
 
-
 /**
  * @NAME: log_create
  * @DESC: Crea una instancia de logger, tomando por parametro
@@ -56,6 +55,17 @@ static bool isEnableLevelInLogger(t_log* logger, t_log_level level);
  * el nivel de detalle minimo a loguear y si además se muestra por pantalla lo que se loguea.
  */
 t_log* log_create(char* file, char *program_name, bool is_active_console, t_log_level detail) {
+	return log_create_sync(file, program_name, is_active_console, detail, false);
+}
+
+/**
+ * @NAME: log_create_sync
+ * @DESC: Crea una instancia de logger, tomando por parametro el nombre del
+ * programa, el nombre del archivo donde se van a generar los logs, el nivel de
+ * detalle minimo a loguear, si además se muestra por pantalla lo que se loguea,
+ * y si es sincronizado o no.
+ */
+t_log* log_create_sync(char* file, char *program_name, bool is_active_console, t_log_level detail, bool synchronized) {
 	t_log* logger = malloc(sizeof(t_log));
 
 	if (logger == NULL) {
@@ -74,12 +84,34 @@ t_log* log_create(char* file, char *program_name, bool is_active_console, t_log_
 			return NULL;
 		}
 	}
+	
+	if(synchronized) {
+		pthread_mutex_t *mutex = malloc(sizeof(pthread_mutex_t));
+
+		if(mutex == NULL) {
+			perror("Cannot create mutex");
+			fclose(file_opened);
+			free(logger);
+			return NULL;
+		}
+		
+		if(pthread_mutex_init(mutex, NULL)) {
+			perror("Cannot initialize mutex");
+			fclose(file_opened);
+			free(mutex);
+			free(logger);
+			return NULL;
+		}
+		
+		logger->mutex = mutex;
+	}
 
 	logger->file = file_opened;
 	logger->is_active_console = is_active_console;
 	logger->detail = detail;
 	logger->pid = getpid();
 	logger->program_name = strdup(program_name);
+	logger->synchronized = synchronized;
 	return logger;
 }
 
@@ -89,6 +121,11 @@ t_log* log_create(char* file, char *program_name, bool is_active_console, t_log_
  * @DESC: Destruye una instancia de logger
  */
 void log_destroy(t_log* logger) {
+	if(logger->synchronized) {
+		pthread_mutex_unlock(logger->mutex);
+		pthread_mutex_destroy(logger->mutex);
+		free(logger->mutex);
+	}
 	free(logger->program_name);
 	fclose(logger->file);
 	free(logger);
@@ -202,9 +239,45 @@ t_log_level log_level_from_string(char *level) {
 	return -1;
 }
 
+int logger_synchronize(t_log *logger) {
+	if(!logger->synchronized) {
+		pthread_mutex_t *mutex = malloc(sizeof(pthread_mutex_t));
+
+		if(mutex == NULL) {
+			perror("Cannot create mutex");
+			return -1;
+		}
+		
+		if(pthread_mutex_init(mutex, NULL)) {
+			perror("Cannot initialize mutex");
+			free(mutex);
+			return -1;
+		}
+		
+		logger->mutex = mutex;
+		logger->synchronized = true;
+		return 0;
+	}
+	return -1;
+}
+
+int logger_desynchronize(t_log *logger) {
+	if(logger->synchronized) {
+		pthread_mutex_unlock(logger->mutex);
+		pthread_mutex_destroy(logger->mutex);
+		free(logger->mutex);
+		return 0;
+	}
+	return -1;
+}
+
 /** PRIVATE FUNCTIONS **/
 
 static void log_write_in_level(t_log* logger, t_log_level level, const char* message_template, va_list list_arguments) {
+	
+	if(logger->synchronized) {
+		pthread_mutex_lock(logger->mutex);
+	}
 
 	if (isEnableLevelInLogger(logger, level)) {
 		char *message, *time, *buffer;
@@ -233,6 +306,10 @@ static void log_write_in_level(t_log* logger, t_log_level level, const char* mes
 		free(time);
 		free(message);
 		free(buffer);
+	}
+	
+	if(logger->synchronized) {
+		pthread_mutex_unlock(logger->mutex);
 	}
 }
 
