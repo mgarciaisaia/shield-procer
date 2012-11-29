@@ -310,8 +310,9 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	(pcb->program_counter)++;
 	bool programa_continua = posicionarse_proxima_instruccion_ejecutable(pcb);
 	if(!programa_continua){
-		sync_queue_push(cola_fin_programa,pcb);
 		printf("finalizo %d\n",pcb->id_proceso);
+		sync_queue_push(cola_fin_programa,pcb);
+		sem_post(mmp);
 	}
 	seguir_ejecutando = programa_continua && seguir_ejecutando;
 	return seguir_ejecutando;
