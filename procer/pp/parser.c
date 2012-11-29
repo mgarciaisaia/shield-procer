@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include "commons/collections/sync_queue.h"
 #include "colas.h"
+#include <inttypes.h>
 
 #define FACTOR_AJUSTE_SPN 0.5
 
@@ -135,6 +136,7 @@ void inicializar_pcb(t_pcb *pcb) {
 		i++;
 	}
 	posicionarse_proxima_instruccion_ejecutable(pcb);
+	printf("La primer instruccion ejecutable de %d es la %"PRIu32"\n", pcb->id_proceso, pcb->program_counter);
 	pcb->valor_estimacion_anterior = i;
 }
 

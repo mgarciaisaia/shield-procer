@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 		}
         
 	char *nombreArchivoLog = NULL;
-        asprintf(&nombreArchivoLog, "PI.[%PRIu64].log", *pid);
+        asprintf(&nombreArchivoLog, "PI.[%"PRIu64"].log", *pid);
         
         t_log *log = log_create(nombreArchivoLog, "PI", 1, LOG_LEVEL_TRACE);
         free(nombreArchivoLog);
