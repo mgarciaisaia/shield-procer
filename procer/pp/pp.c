@@ -12,6 +12,7 @@
 #include "commons/collections/list.h"
 #include "commons/string.h"
 #include <sys/time.h>
+#include "configuracion.h"
 
 void *pendientes_nuevos(void *nada) {
 	int valor;
@@ -78,7 +79,12 @@ uint32_t no_encontro_pcb;
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
     printf("Iniciado PROCER con PID %d\n", getpid());
+
 	colas_initialize();
+
+    inicializar_configuracion();
+    printf("Termino de leer el archivo de configuracion\n");
+
 	registrarSignalListener();
 	
     #define THREAD_COUNT 7
@@ -174,7 +180,7 @@ void encolar_lap_en_ll(void * reg_lista_void){
 		//todo: tener un ptr_a_funcion que me apunta al algoritmo de ordenamiento correspondiente
 		//se usaría como 3er parámetro de sync_queue_ordered_insert
 
-		sync_queue_ordered_insert(cola_listos,registro_listos,es_primer_pcb_mas_antiguo);
+		sync_queue_ordered_insert(cola_listos,registro_listos,algoritmo_ordenamiento);
 		printf("agarro uno de lista auxiliar de prioridades\n");
 	}
 }
@@ -235,7 +241,7 @@ void * ejecutar_io(void * void_pcb_io){
 	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
 	sleep(registro_io->tiempo_acceso_io);
 	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
-	sem_post(semaforo_iot);
+	sem_post(threads_iot);
 	free(registro_io);
 	return NULL;
 }

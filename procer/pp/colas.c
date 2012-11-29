@@ -3,6 +3,7 @@
 #include "colas.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 t_sync_queue *cola_pendientes_nuevos;
 t_sync_queue *cola_nuevos;
@@ -15,8 +16,8 @@ t_sync_queue *cola_fin_bloqueados;
 t_dictionary *tabla_suspendidos;
 t_sync_queue *cola_fin_programa;
 t_dictionary *tabla_procesos;
+t_dictionary *diccionario_colas;
 sem_t * mmp;
-sem_t * semaforo_iot;
 
 t_list * lista_auxiliar_prioridades;
 bool (* algoritmo_ordenamiento)(void *, void *);
@@ -24,12 +25,6 @@ sem_t *mps;
 int quantum = 0;
 
 void colas_initialize() {
-
-	mmp = malloc(sizeof(sem_t));
-	sem_init(mmp,0,3);
-
-	semaforo_iot = malloc(sizeof(sem_t));
-	sem_init(semaforo_iot,0,1);
 
 	cola_pendientes_nuevos = sync_queue_create();
 	cola_nuevos = sync_queue_create();
@@ -42,10 +37,9 @@ void colas_initialize() {
 	tabla_suspendidos = dictionary_create(NULL);
 	cola_fin_programa = sync_queue_create();
 
+	inicializar_diccionario_colas();
+
 	tabla_procesos = dictionary_create(NULL);
-	mps = malloc(sizeof(sem_t));
-	// FIXME: parametrizar el 3
-	sem_init(mps, 0, 3);
 
 	cargar_lista_auxiliar_prioridades();
 }
@@ -65,4 +59,12 @@ void cargar_lista_auxiliar_prioridades(void){
 	list_add(lista_auxiliar_prioridades,cola_reanudar);
 	list_add(lista_auxiliar_prioridades,cola_fin_bloqueados);
 	list_add(lista_auxiliar_prioridades,cola_fin_quantum);
+}
+
+void inicializar_diccionario_colas(void){
+	diccionario_colas = dictionary_create(NULL);
+	dictionary_put(diccionario_colas,strdup("LPN"),cola_nuevos);
+	dictionary_put(diccionario_colas,strdup("LPR"),cola_reanudar);
+	dictionary_put(diccionario_colas,strdup("LFinIO"),cola_fin_bloqueados);
+	dictionary_put(diccionario_colas,strdup("LFinQ"),cola_fin_quantum);
 }

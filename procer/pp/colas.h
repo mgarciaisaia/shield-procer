@@ -19,8 +19,9 @@ extern t_sync_queue *cola_fin_bloqueados;
 extern t_dictionary *tabla_suspendidos;
 extern t_sync_queue *cola_fin_programa;
 extern t_dictionary *tabla_procesos;
+extern t_dictionary *diccionario_colas;
 extern sem_t * mmp;
-extern sem_t * semaforo_iot;
+//extern sem_t * semaforo_iot;
 extern t_list *lista_auxiliar_prioridades;
 extern bool (* algoritmo_ordenamiento)(void *, void *);
 extern sem_t *mps;
@@ -29,6 +30,7 @@ extern int quantum;
 void colas_initialize(void);
 
 void cargar_lista_auxiliar_prioridades(void);
+void inicializar_diccionario_colas(void);
 
 void *sacasaca(void *nada);
 

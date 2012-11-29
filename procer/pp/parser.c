@@ -26,8 +26,11 @@
 #include <inttypes.h>
 #include <errno.h>
 #include <semaphore.h>
+#include "configuracion.h"
 
 #define FACTOR_AJUSTE_SPN 0.5
+
+//sem_t * threads_iot;
 
 int hayQueSuspenderProceso = 0;
 
@@ -311,7 +314,7 @@ int procesar_io(char* instruccion, t_pcb* pcb, bool seguir_ejecutando) {
 		printf("meti un io bloqueante\n");
 	} else {
 		// fixme: implementar no bloqueante
-		if(sem_trywait(semaforo_iot)){
+		if(sem_trywait(threads_iot)){
 		//  devolver codigo error y seguir ejecutando
 			printf("no pudo realizar el wait\n");
 			return 0;
