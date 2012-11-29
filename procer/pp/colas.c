@@ -61,7 +61,7 @@ void *sacasaca(void *nada) {
 void cargar_lista_auxiliar_prioridades(void){
 	lista_auxiliar_prioridades = list_create();
 	list_add(lista_auxiliar_prioridades,cola_nuevos);
-	list_add(lista_auxiliar_prioridades,cola_suspendidos);
+	list_add(lista_auxiliar_prioridades,cola_reanudar);
 	list_add(lista_auxiliar_prioridades,cola_fin_bloqueados);
 	list_add(lista_auxiliar_prioridades,cola_fin_quantum);
 }
