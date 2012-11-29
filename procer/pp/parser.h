@@ -45,6 +45,7 @@ int ejecutarPcb(t_pcb *programa);
 t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);
 t_pcb *nuevo_pcb(int id_proceso);
 void inicializar_pcb(t_pcb *pcb);
+void concatenar_estado_pcb(char **buffer, t_pcb *pcb);
 int es_un_comentario(char *);
 void cargar_variables_en_diccionario(t_dictionary *, char *);
 void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);

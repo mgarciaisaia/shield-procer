@@ -43,45 +43,49 @@ void registrarSignalListener() {
     sigaction(SIGUSR1, handler, NULL);
 }
 
+void concatenar_estado_pcb(char **buffer, t_pcb *pcb) {
+	string_concat(buffer, "----------------\n\n");
+    string_concat(buffer, "ID=%d\n", pcb->id_proceso);
+    string_concat(buffer, "PC=%d\n", pcb->program_counter);
+    string_concat(buffer, "\n-- Estructura de codigo --\n");
+    
+    int indice = 0;
+    
+    while(pcb->codigo[indice] != NULL) {
+        string_concat(buffer, "%s\n", pcb->codigo[indice++]);
+    }
+    
+    string_concat(buffer, "----------------\n");
+    string_concat(buffer, "\n-- Estructuras de datos --\n");
+    
+    // TODA la magia negra junta: inner functions!! (?!!?!?!)
+    void mostrarVariableEnMensaje(char *variable, void *valor) {
+        string_concat(buffer, "%s=%d\n", variable, *(int *)valor);
+    }
+    
+    dictionary_iterator(pcb->datos, mostrarVariableEnMensaje);
+    
+    string_concat(buffer, "----------------\n\n");
+    string_concat(buffer, "-- Estructura de Stack --\n");
+    
+    void mostrarEntradaStackEnMensaje(void *entradaStack) {
+        string_concat(buffer, "%d,%s\n", ((t_registro_stack *)entradaStack)->retorno,
+                ((t_registro_stack *) entradaStack)->nombre_funcion);
+    }
+    
+    stack_iterate(pcb->stack, mostrarEntradaStackEnMensaje);
+    
+    string_concat(buffer, "\n----------------\n");
+}
+
 void suspender(t_pcb *pcb) {
     char *mensaje = NULL;
     // Mensaje que empieza con "1" hace que el PI pida confirmacion para
     // reanudar la ejecucion del proceso
     mensaje = strdup("1");
     
-    string_concat(&mensaje, "----------------\n\n");
-    string_concat(&mensaje, "ID=%d\n", pcb->id_proceso);
-    string_concat(&mensaje, "PC=%d\n", pcb->program_counter);
-    string_concat(&mensaje, "\n-- Estructura de codigo --\n");
-    
-    int indice = 0;
-    
-    while(pcb->codigo[indice] != NULL) {
-        string_concat(&mensaje, "%s\n", pcb->codigo[indice++]);
-    }
-    
-    string_concat(&mensaje, "----------------\n");
-    string_concat(&mensaje, "\n-- Estructuras de datos --\n");
-    
-    // TODA la magia negra junta: inner functions!! (?!!?!?!)
-    void mostrarVariableEnMensaje(char *variable, void *valor) {
-        string_concat(&mensaje, "%s=%d\n", variable, *(int *)valor);
-    }
-    
-    dictionary_iterator(pcb->datos, mostrarVariableEnMensaje);
-    
-    string_concat(&mensaje, "----------------\n\n");
-    string_concat(&mensaje, "-- Estructura de Stack --\n");
-    
-    void mostrarEntradaStackEnMensaje(void *entradaStack) {
-        string_concat(&mensaje, "%d,%s\n", ((t_registro_stack *)entradaStack)->retorno,
-                ((t_registro_stack *) entradaStack)->nombre_funcion);
-    }
-    
-    stack_iterate(pcb->stack, mostrarEntradaStackEnMensaje);
-    
-    string_concat(&mensaje, "\n----------------\n");
-    
+	concatenar_estado_pcb(&mensaje, pcb);
+	
     string_concat(&mensaje, "\nProceso suspendido...\n\n");
     
     socket_send(pcb->id_proceso, mensaje, strlen(mensaje) + 1);
