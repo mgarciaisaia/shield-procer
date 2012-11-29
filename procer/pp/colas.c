@@ -21,6 +21,7 @@ sem_t * semaforo_iot;
 t_list * lista_auxiliar_prioridades;
 bool (* algoritmo_ordenamiento)(void *, void *);
 sem_t *mps;
+int quantum = 0;
 
 void colas_initialize() {
 

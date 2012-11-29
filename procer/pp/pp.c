@@ -199,8 +199,8 @@ void * procer(void * nada){
 	while(1){
 		t_reg_listos * registro_listo = sync_queue_pop(cola_listos);
 		t_pcb *pcb = registro_listo->pcb;
+		int pid_proceso = pcb->id_proceso;
 		free(registro_listo);
-		// todo: INICIALIZAR QUANTUM SI SE NECESITA
 		int instrucciones_ejecutadas = 0;
 		bool seguir_ejecutando = true;
 		while(seguir_ejecutando){
@@ -210,10 +210,13 @@ void * procer(void * nada){
 				
 				hayQueSuspenderProceso = 0;
 				seguir_ejecutando = false;
+			} else if(seguir_ejecutando && quantum && instrucciones_ejecutadas >= quantum - 1) {
+				sync_queue_push(cola_fin_quantum, pcb);
+				seguir_ejecutando = false;
 			}
-			//fixme: chequear quantum
 			instrucciones_ejecutadas++;
 		}
+		printf("Ejecute %d instrucciones del proceso %d\n", instrucciones_ejecutadas, pid_proceso);
 	}
 	return NULL;
 }
