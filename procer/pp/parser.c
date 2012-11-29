@@ -355,7 +355,9 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 			seguir_ejecutando = false;
 		}
 	} else if (es_asignacion(instruccion)) {
-		procesar_asignacion(pcb, instruccion);
+		if(!procesar_asignacion(pcb, instruccion)){
+			seguir_ejecutando = false;
+		}
 	}
 	free(instruccion);
 	(pcb->program_counter)++;
@@ -458,7 +460,7 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 	}
 }
 
-void procesar_asignacion(t_pcb * pcb, char * instruccion) {
+int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	// todo: usar tiempo_ejecucion para cuando consuma el quantum
 	(pcb->ultima_rafaga)++;
 	char *retardo = strchr(instruccion, ';');
@@ -470,8 +472,43 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 
 
 	if (es_funcion_io(expresion)) {
+#define IO_OK 1
+#define IO_FAIL 0
 // todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
 		printf("es una io\n");
+			if(es_bloqueante(expresion)){
+				int tiempo_acceso = tiempo_ejecucion_io(expresion);
+				dictionary_remove(pcb->datos, variable_asignada);
+				dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_OK);
+
+				t_registro_io * registro_io = malloc(sizeof(t_registro_io));
+				registro_io->tiempo_acceso_io = tiempo_acceso;
+				registro_io->pcb = pcb;
+				sync_queue_push(cola_bloqueados, registro_io);
+				printf("meti un io bloqueante\n");
+				return 0;
+			} else {
+
+				if(sem_trywait(threads_iot)){
+				//  devolver codigo error y seguir ejecutando
+					printf("no pudo realizar el wait\n");
+					dictionary_remove(pcb->datos, variable_asignada);
+					dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_FAIL);
+					return 1;
+				} else{
+					dictionary_remove(pcb->datos, variable_asignada);
+					dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_OK);
+
+					int tiempo_acceso = tiempo_ejecucion_io(expresion);
+					printf("pudo realizar el wait\n");
+					t_registro_io * registro_io = malloc(sizeof(t_registro_io));
+					registro_io->tiempo_acceso_io = tiempo_acceso;
+					registro_io->pcb = pcb;
+					sync_queue_push(cola_bloqueados, registro_io);
+					return 0;
+				}
+
+			}
 //				char ** sentencia_io_splitea do = string_split(sentencia,",");
 //				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
 //				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
@@ -520,6 +557,7 @@ void procesar_asignacion(t_pcb * pcb, char * instruccion) {
 			sleep(atoi(retardo + 1));
 		}
 	}
+	return 1;
 }
 
 /*

@@ -76,7 +76,7 @@ void procesar_funcion(t_pcb *, char *);
 void procesar_fin_funcion(t_pcb *,char *);
 void procesar_funcion_imprimir(t_pcb *, char *);
 void procesar_salto(t_pcb *, char *);
-void procesar_asignacion(t_pcb *, char *);
+int procesar_asignacion(t_pcb *, char *);
 
 bool posicionarse_proxima_instruccion_ejecutable(t_pcb *);
 void imprimir(int pid, char *, uint32_t);
