@@ -179,6 +179,22 @@ void encolar_lap_en_ll(void * reg_lista_void){
 	}
 }
 
+void suspender_proceso(t_pcb *pcb) {
+	char *pid = pid_string(pcb->id_proceso);
+	printf("Suspendo el proceso %s\n", pid);
+	dictionary_put(tabla_suspendidos, pid, pcb);
+	free(pid);
+
+	sem_post(mmp);
+
+	// mensaje con 1 hace que el PI pida al usuario reanudar
+	char *mensaje = strdup("1");
+	concatenar_estado_pcb(&mensaje, pcb);
+	string_concat(&mensaje, "\n\nProceso suspendido\n");
+
+	socket_send(pcb->id_proceso, mensaje, strlen(mensaje));
+}
+
 void * procer(void * nada){
 	while(1){
 		t_reg_listos * registro_listo = sync_queue_pop(cola_listos);
@@ -190,19 +206,7 @@ void * procer(void * nada){
 		while(seguir_ejecutando){
 			seguir_ejecutando = ejecutarInstruccion(pcb);
 			if(seguir_ejecutando && hayQueSuspenderProceso) {
-				char *pid = pid_string(pcb->id_proceso);
-				printf("Suspendo el proceso %s\n", pid);
-				dictionary_put(tabla_suspendidos, pid, pcb);
-				free(pid);
-				
-				sem_post(mmp);
-				
-				// mensaje con 1 hace que el PI pida al usuario reanudar
-				char *mensaje = strdup("1");
-				concatenar_estado_pcb(&mensaje, pcb);
-				string_concat(&mensaje, "\n\nProceso suspendido\n");
-				
-				socket_send(pcb->id_proceso, mensaje, strlen(mensaje));
+				suspender_proceso(pcb);
 				
 				hayQueSuspenderProceso = 0;
 				seguir_ejecutando = false;
