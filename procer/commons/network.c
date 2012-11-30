@@ -105,23 +105,49 @@ int socket_receive(int socket, void **buffer) {
 
 int socket_sendfile(int socket, int file_descriptor) {
 	struct stat st;
-	int sentBytes;
+	int sentBytes, chunkSentBytes;
 
 	if (fstat(file_descriptor, &st)) {
 		perror("fstat");
 		return -2;
 	}
-	uint32_t file_lenght = st.st_size;
+	uint32_t file_lenght = st.st_size + 1;
 
-	if((sentBytes = send(socket, &file_lenght, sizeof(file_lenght), 0)) <= 0) {
-		if(sentBytes < 0) {
+	if((chunkSentBytes = send(socket, &file_lenght, sizeof(file_lenght), 0)) <= 0) {
+		if(chunkSentBytes < 0) {
             perror("sendfile: Error sending header");
             return -3;
-        } else if(sentBytes == 0) {
-			printf("sendfile: Error sending header - closed connection");
+        } else if(chunkSentBytes == 0) {
+			printf("sendfile: Error sending header - connection closed\n");
 			return 0;
 		}
 	}
+	
+	sentBytes = chunkSentBytes;
 
-	return sendfile(socket, file_descriptor, NULL, file_lenght);
+	if((chunkSentBytes = sendfile(socket, file_descriptor, NULL, file_lenght - 1)) <=0) {
+		if(chunkSentBytes < 0) {
+			perror("sendfile: Error sending file");
+			printf("Sent %d of %d bytes\n", chunkSentBytes, file_lenght - 1);
+		} else {
+			printf("sendfile: Error sending file - connection closed\n");
+			return 0;
+		}
+	}
+	
+	sentBytes += chunkSentBytes;
+	
+	int zeroBytes = 0;
+	// Envio el \0 final
+	if((chunkSentBytes = send(socket, &zeroBytes, 1, 0)) <= 0) {
+		if(chunkSentBytes < 0) {
+			perror("sendfile: Error sending null byte");
+			printf("Sent %d of %d bytes\n", chunkSentBytes, 1);
+		} else {
+			printf("sendfile: Error sending file - connection closed\n");
+			return 0;
+		}
+	}
+	
+	return sentBytes + chunkSentBytes;
 }
