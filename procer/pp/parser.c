@@ -215,10 +215,12 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	printf("Procesando la instruccion %d de %d: << %s >>\n", pc, pcb->id_proceso, instruccion);
 	if (es_funcion(pcb, instruccion)) {
 		procesar_funcion(pcb, instruccion);
+		sleep(time_sleep);
 	} else if (es_fin_funcion(instruccion)) {
 		procesar_fin_funcion(pcb, instruccion);
 	} else if (es_funcion_imprimir(instruccion)) {
 		procesar_funcion_imprimir(pcb, instruccion);
+		sleep(time_sleep);
 	} else if (es_un_salto(instruccion)) {
 		procesar_salto(pcb, instruccion);
 	} else if (es_funcion_io(instruccion)) {
@@ -226,6 +228,7 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 		if(procesar_io(instruccion, pcb)){
 			seguir_ejecutando = false;
 		}
+		sleep(time_sleep);
 	} else if (es_asignacion(instruccion)) {
 		if(!procesar_asignacion(pcb, instruccion)){
 			seguir_ejecutando = false;
@@ -329,6 +332,8 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 	if(retardo != NULL) {
 		printf("Duermo %d en un salto\n", atoi(retardo + 1));
 		sleep(atoi(retardo + 1));
+	} else {
+		sleep(time_sleep);
 	}
 }
 
@@ -428,6 +433,8 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 		if(retardo != NULL) {
 			printf("Duermo %d segundos por asignacion\n", atoi(retardo + 1));
 			sleep(atoi(retardo + 1));
+		} else {
+			sleep(time_sleep);
 		}
 	}
 	return 1;

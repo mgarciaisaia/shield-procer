@@ -208,9 +208,10 @@ void * lanzar_ios(void * nada){
 
 void * ejecutar_io(void * void_pcb_io){
 	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
-	printf("Ejecuto IO para %d por %d segundos\n", registro_io->pcb->id_proceso, registro_io->tiempo_acceso_io);
-	sleep(registro_io->tiempo_acceso_io);
-	printf("Termine IO para %d por %d segundos\n", registro_io->pcb->id_proceso, registro_io->tiempo_acceso_io);
+	int tiempo_sleep = registro_io->tiempo_acceso_io * time_io;
+	printf("Ejecuto %d unidades de IO para %d (%d segundos)\n", registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
+	sleep(tiempo_sleep);
+	printf("Termine %d unidades de IO para %d (%d segundos)\n", registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
 	sem_post(threads_iot);
 	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
 	free(registro_io);

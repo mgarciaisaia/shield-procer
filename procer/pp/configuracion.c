@@ -14,11 +14,12 @@
 #include "commons/string.h"
 #include "parser.h"
 #include <stdio.h>
+#include <string.h>
 
 t_config * config;
-uint32_t puerto_tcp;
-uint8_t time_sleep;
-uint8_t time_io;
+char *puerto_tcp;
+int time_sleep;
+int time_io;
 sem_t * threads_iot;
 
 void inicializar_configuracion(){
@@ -48,7 +49,8 @@ void inicializar_configuracion(){
 	sem_getvalue(threads_iot, &cantidad_hilos_io);
 	printf("Threads IO: %d\n", cantidad_hilos_io);
 
-	puerto_tcp = config_get_long_value(config,"PUERTO_TCP");
+	puerto_tcp = strdup(config_get_string_value(config,"PUERTO_TCP"));
+	printf("El puerto TCP es %s\n", puerto_tcp);
 	time_io = config_get_int_value(config,"TIME_IO");
 	asignar_parametros_que_cambian_en_tiempo_de_ejecucion(config);
 	config_destroy(config);
@@ -73,8 +75,6 @@ void asignar_algoritmo_de_ordenamiento(t_config * config){
 	} else if(string_equals_ignore_case(string_algoritmo,"SPN")){
 		algoritmo_ordenamiento = es_primer_pcb_de_rafaga_mas_corta;
 	}
-	// TODO: UNA VEZ ASIGNADO EL ALGORITMO DE ORDENAMIENTO HACER UN list_sort A LA LISTA DE LISTOS
-	//		 E INSERTAR MEDIANTE list_ordered_insert
 }
 
 void asignar_lista_lap(t_config * config){

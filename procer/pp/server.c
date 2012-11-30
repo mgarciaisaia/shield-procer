@@ -19,8 +19,8 @@
 #include "commons/collections/list.h"
 #include "commons/collections/sync_queue.h"
 #include "commons/string.h"
+#include "configuracion.h"
 
-#define PORT "23456"   // port we're listening on
 #define ERROR_MPS "Error - se alcanzo el maximo de procesos en el sistema (MPS)"
 
 // get sockaddr, IPv4 or IPv6:
@@ -61,7 +61,8 @@ void *lts(void *nada) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-	if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+	printf("El puerto de escucha es %s\n", puerto_tcp);
+	if ((rv = getaddrinfo(NULL, puerto_tcp, &hints, &ai)) != 0) {
 		fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
 		exit(1);
 	}

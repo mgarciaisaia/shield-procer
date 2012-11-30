@@ -19,8 +19,8 @@ void asignar_algoritmo_de_ordenamiento(t_config *);
 void asignar_lista_lap(t_config *);
 
 extern t_config * config;
-extern uint32_t puerto_tcp;
-extern uint8_t time_sleep;
-extern uint8_t time_io;
+extern char *puerto_tcp;
+extern int time_sleep;
+extern int time_io;
 extern sem_t * threads_iot;
 
