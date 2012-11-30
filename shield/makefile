@@ -21,7 +21,10 @@ ifndef usuario
 endif
 
 usuarioConfigurado: usuarioIngresado
-	@test -e ~$(usuario)/.shield
+	@test -d ~$(usuario)/.shield
+
+usuarioNoConfigurado: usuarioIngresado
+	@test ! -d ~$(usuario)/.shield
 
 noEstaInstalado:
 	@test ! -e $(enlaceScript)
@@ -58,7 +61,7 @@ desinstalar : esRoot estaInstalado nadieConfigurado
 	@rm -rf $(shell dirname $$(readlink $(enlaceScript)))
 	@rm $(enlaceScript) 
 
-configurar : esRoot usuarioIngresado
+configurar : esRoot usuarioNoConfigurado
 	@./utils/copiarClaveSsh.sh $(enlaceScript) $(usuario)
 	@mkdir ~$(usuario)/.shield # Si tenia configurado, rompe
 	@cp -r configuraciones/ ~$(usuario)/.shield/conf
