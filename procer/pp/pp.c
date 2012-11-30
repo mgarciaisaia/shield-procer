@@ -131,25 +131,27 @@ void * sts(void * nada) {
 
 void encolar_en_listos(){
 	no_encontro_pcb = 1; //PARA PODER SACAR SOLO UN ELEMENTO DE LA LISTAS DE PRIORIDADES
-	list_iterate(lista_auxiliar_prioridades,encolar_lap_en_ll);
-}
 
-void encolar_lap_en_ll(void * reg_lista_void){
-	t_sync_queue * sync_queue = reg_lista_void;
-	if(!sync_queue_is_empty(sync_queue) && no_encontro_pcb){
-		no_encontro_pcb = 0;
-		t_pcb * pcb = sync_queue_pop(sync_queue);
+	void encolar_lap_en_ll(void * reg_lista_void) {
+		t_sync_queue * sync_queue = (t_sync_queue *) reg_lista_void;
+		if(no_encontro_pcb) {
+			t_pcb *pcb = sync_queue_try_pop(sync_queue);
+			if(pcb != NULL) {
+				printf("STS: saque un elemento, lo mando a ready\n");
+				no_encontro_pcb = 0;
+				struct timeval tv;
+				gettimeofday(&tv, NULL);
+				double time_in_usec = (tv.tv_sec) * 1000000 + (tv.tv_usec);
+				t_reg_listos * registro_listos = malloc(sizeof(t_reg_listos));
+				registro_listos->pcb = pcb;
+				registro_listos->tiempo_entrada_listos = time_in_usec;
 
-		struct timeval tv;
-		gettimeofday(&tv, NULL);
-		double time_in_usec = (tv.tv_sec) * 1000000 + (tv.tv_usec);
-		t_reg_listos * registro_listos = malloc(sizeof(t_reg_listos));
-		registro_listos->pcb = pcb;
-		registro_listos->tiempo_entrada_listos = time_in_usec;
-
-		sync_queue_ordered_insert(cola_listos,registro_listos,algoritmo_ordenamiento);
-		printf("agarro uno de lista auxiliar de prioridades\n");
+				sync_queue_ordered_insert(cola_listos,registro_listos,algoritmo_ordenamiento);
+			}
+		}
 	}
+
+	list_iterate(lista_auxiliar_prioridades,encolar_lap_en_ll);
 }
 
 void suspender_proceso(t_pcb *pcb) {
