@@ -49,10 +49,12 @@ instalar : esRoot noEstaInstalado
 	@ssh-keygen -q -t rsa -C "SHIELD's key" -f $(destino)/clave_auditoria -N ''
 	@chown root:shield $(destino)/clave_auditoria
 	@chmod g+r $(destino)/clave_auditoria
+	@echo $(enlaceScript) >> /etc/shells
 
 desinstalar : esRoot estaInstalado nadieConfigurado
 	@rm /etc/sudoers.d/42-shield
 	@delgroup shield
+	@./utils/removerShieldShells.sh
 	@rm -rf $(shell dirname $$(readlink $(enlaceScript)))
 	@rm $(enlaceScript) 
 
