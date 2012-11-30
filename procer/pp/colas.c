@@ -47,14 +47,6 @@ void colas_initialize() {
 }
 
 
-void *sacasaca(void *nada) {
-	while(1) {
-		sync_queue_pop(cola_pendientes_nuevos);
-		printf("Saque uno de nuevos!\n");
-	}
-	return NULL;
-}
-
 void cargar_lista_auxiliar_prioridades(void){
 	lista_auxiliar_prioridades = list_create();
 	list_add(lista_auxiliar_prioridades,cola_nuevos);
