@@ -85,7 +85,6 @@ int main(void) {
 	colas_initialize();
 
     inicializar_configuracion();
-    printf("Termino de leer el archivo de configuracion\n");
 
 	registrarSignalListener();
 	

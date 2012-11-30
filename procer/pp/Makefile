@@ -16,6 +16,7 @@ dependents:
 	-cd ../commons/ && make all
 
 build/pp: dependents create-dirs $(OBJS)
+	cp -u ./pp.conf build/
 	gcc -L"../commons/build" -o "build/pp" $(OBJS) -lcommons -pthread
 
 create-dirs:

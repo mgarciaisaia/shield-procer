@@ -9,7 +9,7 @@
 #include <stdint.h>
 #include <semaphore.h>
 
-#define PATH_CONFIG "/home/utnso/Desarrollo/2012-2c-no-quiero-matarte-pero-si-me-obligas/procer/pp/archivo_configuracion.conf"
+#define PATH_CONFIG "./pp.conf"
 #define EVENT_SIZE  ( sizeof (struct inotify_event) + 1000 )
 #define BUF_LEN     ( 1024 * EVENT_SIZE )
 

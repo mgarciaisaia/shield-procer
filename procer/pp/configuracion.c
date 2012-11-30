@@ -9,9 +9,11 @@
 #include "configuracion.h"
 #include "colas.h"
 #include <semaphore.h>
+#include <limits.h>
 #include <stdlib.h>
 #include "commons/string.h"
 #include "parser.h"
+#include <stdio.h>
 
 t_config * config;
 uint32_t puerto_tcp;
@@ -21,6 +23,18 @@ sem_t * threads_iot;
 
 void inicializar_configuracion(){
 	t_config * config = config_create(PATH_CONFIG);
+	
+	char *path_archivo_configuracion = NULL;
+	if((path_archivo_configuracion = realpath(PATH_CONFIG, path_archivo_configuracion)) == NULL) {
+		perror("realpath del archivo de configuracion");
+		printf("El path de configuracion es: %s\n", PATH_CONFIG);
+		exit(1);
+	}
+	
+	if(config == NULL) {
+		printf("No se pudo leer el archivo de configuracion %s\n", path_archivo_configuracion);
+		exit(2);
+	}
 
 	mps = malloc(sizeof(sem_t));
 	sem_init(mps,0,config_get_int_value(config,"MPS"));
@@ -35,6 +49,9 @@ void inicializar_configuracion(){
 	time_io = config_get_int_value(config,"TIME_IO");
 	asignar_parametros_que_cambian_en_tiempo_de_ejecucion(config);
 	config_destroy(config);
+	
+	printf("Termino de leer el archivo de configuracion %s\n", path_archivo_configuracion);
+	free(path_archivo_configuracion);
 }
 
 void asignar_parametros_que_cambian_en_tiempo_de_ejecucion(t_config * config){
