@@ -46,6 +46,9 @@
 	t_log* 		log_create_sync(char* file, char *program_name, bool is_active_console, t_log_level level, bool synchronized);
 	void 		log_destroy(t_log* logger);
 
+	void 		log_set_is_active_console(t_log* logger, bool is_active_console);
+	void 		log_set_detail_level(t_log* logger, t_log_level detail_level);
+
 	void 		log_trace(t_log* logger, const char* message, ...);
 	void 		log_debug(t_log* logger, const char* message, ...);
 	void 		log_info(t_log* logger, const char* message, ...);

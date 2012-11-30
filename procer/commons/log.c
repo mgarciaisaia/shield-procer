@@ -132,6 +132,35 @@ void log_destroy(t_log* logger) {
 }
 
 /**
+ * @NAME: log_set_is_active_console
+ * @DESC: Establece si la consola esta activa o no
+ */
+void log_set_is_active_console(t_log* logger, bool is_active_console) {
+	if(logger->synchronized) {
+		pthread_mutex_lock(logger->mutex);
+	}
+	logger->is_active_console = is_active_console;
+	if(logger->synchronized) {
+		pthread_mutex_unlock(logger->mutex);
+	}
+}
+
+/**
+ * @NAME: log_set_detail_level
+ * @DESC: Establece el nivel de detalle de logger
+ */
+void log_set_detail_level(t_log *logger, t_log_level detail_level) {
+	if(logger->synchronized) {
+		pthread_mutex_lock(logger->mutex);
+	}
+	// FIXME: validar que detail_level sea un nivel existente
+	logger->detail = detail_level;
+	if(logger->synchronized) {
+		pthread_mutex_unlock(logger->mutex);
+	}
+}
+
+/**
  * @NAME: log_trace
  * @DESC: Loguea un mensaje con el siguiente formato
  *
