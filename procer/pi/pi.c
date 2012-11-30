@@ -113,10 +113,13 @@ int main(int argc, char* argv[]) {
         #define PEDIDO_REANUDAR "1REANUDARPROCESO"
         char *receiveBuffer = NULL;
 	
+	int exit_status = 1;
+		
 	while((bytesLeidos = socket_receive(conexion, (void**)&receiveBuffer)) > 0) {
 		if(*receiveBuffer == '2') {
 			// cerramos la conexion
 			free(receiveBuffer);
+			exit_status = 0;
 			break;
 		}
 		confirmar = (*receiveBuffer == '1');
@@ -138,5 +141,5 @@ int main(int argc, char* argv[]) {
 	close(conexion);
         log_destroy(log);
         free(pid);
-        return EXIT_SUCCESS;
+        return exit_status;
 }
