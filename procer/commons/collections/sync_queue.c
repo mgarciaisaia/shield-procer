@@ -32,6 +32,17 @@ void *sync_queue_pop(t_sync_queue *self) {
 	return element;
 }
 
+void *sync_queue_try_pop(t_sync_queue *self) {
+	void *element;
+	if(sem_trywait(self->semaphore)) {
+		return NULL;
+	}
+	pthread_mutex_lock(self->mutex);
+	element = list_remove(self->queue, 0);
+	pthread_mutex_unlock(self->mutex);
+	return element;
+}
+
 void *sync_queue_peek(t_sync_queue *self) {
 	return list_get(self->queue, 0);
 }

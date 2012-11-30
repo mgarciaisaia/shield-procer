@@ -19,6 +19,7 @@ extern "C" {
 	t_sync_queue *sync_queue_create(void);
 	void sync_queue_push(t_sync_queue *, void *);
 	void *sync_queue_pop(t_sync_queue *);
+	void *sync_queue_try_pop(t_sync_queue *);
 	void *sync_queue_peek(t_sync_queue *);
 	
 	void sync_queue_clean(t_sync_queue *);
