@@ -65,8 +65,8 @@ void concatenar_estado_pcb(char **buffer, t_pcb *pcb) {
     string_concat(buffer, "\n-- Estructuras de datos --\n");
     
     // TODA la magia negra junta: inner functions!! (?!!?!?!)
-    void mostrarVariableEnMensaje(char *variable, void *valor) {
-        string_concat(buffer, "%s=%d\n", variable, *(int *)valor);
+    void mostrarVariableEnMensaje(char *variable, void *elemento) {
+        string_concat(buffer, "%s=%d\n", variable, (int) ((t_hash_element *)elemento)->data);
     }
     
     dictionary_iterator(pcb->datos, mostrarVariableEnMensaje);
@@ -304,7 +304,7 @@ void procesar_fin_funcion(t_pcb * pcb, char * instruccion) {
 void procesar_funcion_imprimir(t_pcb * pcb, char * instruccion) {
 	char ** palabra = string_split(instruccion, " ");
 	(pcb->ultima_rafaga)++;
-	uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos, palabra[1]);
+	int valor_variable = (int) dictionary_get(pcb->datos, palabra[1]);
 	imprimir(pcb->id_proceso, palabra[1], valor_variable);
 }
 
@@ -313,7 +313,7 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 	char *sin_retardo = strndup(instruccion, retardo - instruccion);
 
 	char ** palabra = string_split(sin_retardo, " ");
-	uint32_t valor_variable = (uint32_t) dictionary_get(pcb->datos, palabra[1]);
+	int valor_variable = (int) dictionary_get(pcb->datos, palabra[1]);
 	if (string_equals_ignore_case(palabra[0], "ssc")) {
 		if (valor_variable == 0) {
 			string_append(&palabra[2], ":");
