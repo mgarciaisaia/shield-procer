@@ -8,6 +8,7 @@
 #include "commons/config.h"
 #include <stdint.h>
 #include <semaphore.h>
+#include "commons/log.h"
 
 #define PATH_CONFIG "./pp.conf"
 #define EVENT_SIZE  ( sizeof (struct inotify_event) + 1000 )
@@ -23,4 +24,5 @@ extern char *puerto_tcp;
 extern int time_sleep;
 extern int time_io;
 extern sem_t * threads_iot;
+extern t_log *logger;
 

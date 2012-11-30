@@ -14,6 +14,7 @@
 #include <sys/time.h>
 #include "configuracion.h"
 #include <sys/inotify.h>
+#include "commons/log.h"
 
 void *pendientes_nuevos(void *nada) {
 	int valor;
@@ -89,6 +90,7 @@ uint32_t no_encontro_pcb;
 #define ERROR_SEND_PID 3
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
+	logger = log_create("PP.log", "PP", true, LOG_LEVEL_TRACE);
     printf("Iniciado PROCER con PID %d\n", getpid());
 
 	colas_initialize();

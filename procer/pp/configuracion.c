@@ -15,12 +15,14 @@
 #include "parser.h"
 #include <stdio.h>
 #include <string.h>
+#include "commons/log.h"
 
 t_config * config;
 char *puerto_tcp;
 int time_sleep;
 int time_io;
 sem_t * threads_iot;
+t_log *logger;
 
 void inicializar_configuracion(){
 	t_config * config = config_create(PATH_CONFIG);
