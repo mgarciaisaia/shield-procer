@@ -48,11 +48,11 @@ echo "
 function detenerModulos() {
 	if [ -v pidPeriodicos ]
 	then
-		kill $pidPeriodicos
+		kill $pidPeriodicos 2> /dev/null
 	fi
 	if [ -v pidVerificarConfiguracion ]
 	then
-		kill $pidVerificarConfiguracion
+		kill $pidVerificarConfiguracion 2> /dev/null
 	fi
 	for moduloPeriodico in $modulosPeriodicos
 	do
