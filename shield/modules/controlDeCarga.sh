@@ -32,7 +32,8 @@ function procesar() {
 		pidUltimoNice=$pidProcesoMayor
 		cantidadNiceConsecutivos=0
 	fi
-	renice +5 $pidProcesoMayor > /dev/null
+	niceActualProceso=$(ps -o nice= $pidProcesoMayor)
+	renice $(($niceActualProceso + 5)) $pidProcesoMayor > /dev/null
 	cantidadNiceConsecutivos=$(($cantidadNiceConsecutivos + 1))
 	shieldLog INFO "$NOMBRE_MODULO: $pidProcesoMayor tiene $cantidadNiceConsecutivos nice consecutivos"
 }
