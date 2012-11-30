@@ -119,49 +119,7 @@ int main(void) {
 	}
 	
 	list_iterate(threads, joinear_thread);
-	return 0;
-    int socket = socket_binded(23456);
-    if(socket < 0) {
-        printf("Error %d bindeando el socket: %s\n", errno, strerror(errno));
-        exit(ERROR_LISTEN);
-    }
-    if(listen(socket, 0)) {
-        printf("Error %d escuchando en el socket %d: %s\n", errno, socket, strerror(errno));
-        exit(ERROR_LISTEN);
-    }
-    
-    struct sockaddr_in address;
-    socklen_t addressLength = sizeof address;
-    
-    int querySocket = accept(socket, (struct sockaddr *) &address, &addressLength);
-    
-    int sentBytes = socket_send(querySocket, &querySocket, sizeof(querySocket));
-    if(sentBytes < 0) {
-        perror("Error sending process' PID");
-        exit(ERROR_SEND_PID);
-    }
-    
-    void *input = NULL;
-    int inputLenght = socket_receive(querySocket, &input);
-    if(inputLenght != sizeof(uint8_t)) {
-	    printf("Error recibiendo la prioridad del proceso %d - recibidos %d bytes, se esperaban %zd\n", querySocket, inputLenght, sizeof(uint8_t));
-	    free(input);
-	    exit(ERROR_RECEIVE_PRIORITY);
-    }
-
-    uint8_t prioridadProceso = *(uint8_t *) input;
-    free(input);
-    printf("La prioridad del proceso %d es %d\n", querySocket, prioridadProceso);
-
-    inputLenght = socket_receive(querySocket, &input);
-    printf("Recibido: %.*s\n", inputLenght, (char *)input);
-    
-    ejecutar((char *)input, querySocket, prioridadProceso);
-    
-    close(querySocket);
-    close(socket);
-    
-    return (EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
 
 void * sts(void * nada) {
@@ -188,8 +146,6 @@ void encolar_lap_en_ll(void * reg_lista_void){
 		t_reg_listos * registro_listos = malloc(sizeof(t_reg_listos));
 		registro_listos->pcb = pcb;
 		registro_listos->tiempo_entrada_listos = time_in_usec;
-		//todo: tener un ptr_a_funcion que me apunta al algoritmo de ordenamiento correspondiente
-		//se usaría como 3er parámetro de sync_queue_ordered_insert
 
 		sync_queue_ordered_insert(cola_listos,registro_listos,algoritmo_ordenamiento);
 		printf("agarro uno de lista auxiliar de prioridades\n");

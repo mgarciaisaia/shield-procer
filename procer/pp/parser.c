@@ -83,26 +83,6 @@ void concatenar_estado_pcb(char **buffer, t_pcb *pcb) {
     string_concat(buffer, "\n----------------\n");
 }
 
-void suspender(t_pcb *pcb) {
-    char *mensaje = NULL;
-    // Mensaje que empieza con "1" hace que el PI pida confirmacion para
-    // reanudar la ejecucion del proceso
-    mensaje = strdup("1");
-    
-	concatenar_estado_pcb(&mensaje, pcb);
-	
-    string_concat(&mensaje, "\nProceso suspendido...\n\n");
-    
-    socket_send(pcb->id_proceso, mensaje, strlen(mensaje) + 1);
-    
-    free(mensaje);
-    
-    do {
-        // FIXME: tengo que guardarme los bytes recibidos?
-        socket_receive(pcb->id_proceso, (void *)&mensaje);
-    } while (mensaje != NULL && strcmp(mensaje, "1REANUDARPROCESO") != 0);
-}
-
 t_pcb *nuevo_pcb(int id_proceso) {
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 	pcb->id_proceso = id_proceso;
@@ -159,91 +139,6 @@ void destruir_pcb(t_pcb *pcb) {
 	free(pcb);
 }
 
-int ejecutarPcb(t_pcb *pcb) {
-	inicializar_pcb(pcb);
-	registrarSignalListener();
-	while (1) {
-		if (procesar(pcb) == 0) {
-			break;
-		}
-		if (hayQueSuspenderProceso) {
-			suspender(pcb);
-			hayQueSuspenderProceso = 0;
-		}
-	}
-	// fixme: alguien tiene que cerrar el socket
-	eliminar_estructuras(pcb);
-	return EXIT_SUCCESS;
-}
-
-int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso) {
-
-//	char * programa =
-//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\nfin_programa\n";
-//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\na=-1\nimprimir a\na=-3+a\nimprimir a\nfin_programa\n";
-//			"#!/home/utnso/pi\n# Comentario\nvariables a\ncomienzo_programa\n\ta=-1\n\tf1()\n\timprimir a\nfin_programa\ncomienzo_funcion f1\n\ta=-3-a\n\tf2()\nfin_funcion f1\ncomienzo_funcion f2\n\ta=a-0\nfin_funcion";
-//			"#!/home/utnso/pi\n# Comentario\nvariables i\ncomienzo_programa\n\ta=4\n\ti=3\n\tinicio_for:\n\ti=i-1\n\ta=a+2\n\tsnc i inicio_for\n\timprimir i\n\timprimir a\nfin_programa";
-//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables i,b\n\ncomienzo_programa\n\ti=1\n\tinicio_for:\n\ti=i+1\n\timprimir i\n\tb=i-10\n\tsnc b inicio_for\nfin_programa";
-//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a\n\ncomienzo_programa\n\ta=1\n\ta=a+1\n\ta=a+2\n\timprimir a\nfin_programa";
-//			"#!/home/utnso/pi\n\n# Comentario\n\nvariables a,b,c,d,e\n\ncomienzo_programa\n\ta=1\n\tb=2;3\n\tc=a+b\n\td=c-3\n\tf1()\n\tf2()\n\te=a+c;2\nimprimir a\nimprimir b\nimprimir c\nimprimir d\nimprimir e\nfin_programa\n\ncomienzo_funcion f1\n\ta=3\n\tf3()\n\tb=4\nfin_funcion f1\n\ncomienzo_funcion f2\n\ta=a+1\nfin_funcion f2\n\ncomienzo_funcion f3\n\tc=d\nfin_funcion f3";
-	t_pcb * pcb = crear_pcb(programa, socketInterprete, prioridadProceso);
-	registrarSignalListener();
-	while (1) {
-		procesar(pcb);
-		if (hayQueSuspenderProceso) {
-			suspender(pcb);
-			hayQueSuspenderProceso = 0;
-		}
-	}
-	eliminar_estructuras(pcb);
-	return EXIT_SUCCESS;
-}
-
-/*
- * Se carga la estructura del PCB
- * Cargo los diccionarios de variables(no se setean acá!!!), funciones y etiquetas, para que al procesar
- * ya tenga las referencias
- */
-t_pcb *crear_pcb(char* programa, int socketInterprete, uint8_t prioridad) {
-	t_pcb *pcb = malloc(sizeof(t_pcb));
-	pcb->id_proceso = socketInterprete;
-	pcb->prioridad = prioridad;
-	pcb->datos = dictionary_create(NULL);
-	pcb->d_funciones = dictionary_create(NULL);
-	pcb->d_etiquetas = dictionary_create(NULL);
-	pcb->stack = stack_create();
-#define SEPARADOR_LINEAS '\n'
-	pcb->codigo = string_tokens(programa, SEPARADOR_LINEAS);
-	int i = 0;
-	//primer recorrido para cargar estructuras del PCB
-	//ID, PC, DATOS, STACK, CODIGO -- DICCIONARIO DE FUNCIONES, DICCIONARIO DE ETIQUETAS
-	while (pcb->codigo[i] != NULL) {
-		string_trim(&pcb->codigo[i]);
-		if (!es_un_comentario(pcb->codigo[i])) {
-#define SEPARADOR_PALABRAS ' '
-			char ** palabra = string_tokens(pcb->codigo[i], SEPARADOR_PALABRAS);
-			if (string_equals_ignore_case(palabra[0], "variables")) {
-				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
-			} else if (string_equals_ignore_case(palabra[0],
-					"comienzo_programa")) {
-				pcb->program_counter = i + 1;
-			} else if (string_equals_ignore_case(palabra[0],
-					"comienzo_funcion")) {
-				cargar_funciones_en_diccionario(pcb->d_funciones, palabra[1],
-						(void *) i);
-			} else if ((index(palabra[0], ':')) != NULL) {
-				cargar_etiquetas_en_diccionario(pcb->d_etiquetas, palabra[0],
-						(void *) i);
-			}
-		}
-		i++;
-	}
-	// TODO: ver si esta bueno este valor o da para cambiarlo
-	pcb->valor_estimacion_anterior = i;
-	pcb->ultima_rafaga = 0;
-	return pcb;
-}
-
 char *pid_string(int pid) {
 	char *pidString;
 	asprintf(&pidString, "%d", pid);
@@ -274,31 +169,6 @@ void cargar_funciones_en_diccionario(t_dictionary * diccionario,
 void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
 		char * nombre_etiqueta, void * nro_linea) {
 	dictionary_put(diccionario, strdup(nombre_etiqueta), nro_linea);
-}
-
-/*
- * Aca se van a cargar/modificar los valores de las variables, el stack, etc.
- */
-// todo: ponerle las condiciones que corresponden al while
-int procesar(t_pcb * pcb) {
-	pcb->ultima_rafaga = 0;
-	// FIXME: este sleep() es CUALQUIERA
-	while (!hayQueSuspenderProceso) {
-		if (ejecutarInstruccion(pcb) == 0) {
-			printf("TerminoooooooooooooOOOO\n");
-			return 0;
-		}
-		sleep(1);
-	}
-	printf("lineas ejecutadas por el proceso: %d\n", pcb->ultima_rafaga);
-	return 1;
-}
-
-void eliminar_estructuras(t_pcb * pcb) {
-	dictionary_destroy(pcb->datos);
-	dictionary_destroy(pcb->d_funciones);
-	dictionary_destroy(pcb->d_etiquetas);
-	free(pcb);
 }
 
 /*
@@ -612,10 +482,6 @@ bool es_primer_pcb_de_rafaga_mas_corta(void * reg_void_1, void * reg_void_2) {
 	double estimacion_rafaga_reg_2 = calcular_rafaga(
 			reg_2->pcb->valor_estimacion_anterior, reg_2->pcb->ultima_rafaga);
 	return estimacion_rafaga_reg_1 < estimacion_rafaga_reg_2;
-}
-
-bool es_io_bloqueante(char * instruccion) {
-	return true;
 }
 
 int tiempo_ejecucion_io(char * instruccion){

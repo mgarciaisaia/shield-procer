@@ -47,10 +47,7 @@ typedef struct {
 	t_pcb * pcb;
 } t_registro_io;
 
-int ejecutar(char *programa, int socketInterprete, uint8_t prioridadProceso);
-int ejecutarPcb(t_pcb *programa);
 void registrarSignalListener();
-t_pcb *crear_pcb(char *programa, int socketInterprete, uint8_t prioridad);
 t_pcb *nuevo_pcb(int id_proceso);
 void inicializar_pcb(t_pcb *pcb);
 void destruir_pcb(t_pcb *pcb);
@@ -59,8 +56,6 @@ int es_un_comentario(char *);
 void cargar_variables_en_diccionario(t_dictionary *, char *);
 void cargar_funciones_en_diccionario(t_dictionary *, char *, void *);
 void cargar_etiquetas_en_diccionario(t_dictionary *, char *, void *);
-int procesar(t_pcb * pcb);
-void eliminar_estructuras(t_pcb *);
 bool ejecutarInstruccion(t_pcb *);
 
 int es_funcion(t_pcb *, char *);
@@ -92,7 +87,6 @@ double calcular_rafaga(double, double);
 bool es_primer_pcb_de_menor_prioridad(void *, void *);
 bool es_primer_pcb_de_rafaga_mas_corta(void *, void *);
 
-bool es_io_bloqueante(char * );
 int procesar_io(char*, t_pcb*);
 int tiempo_ejecucion_io(char *);
 uint8_t es_bloqueante(char *);
