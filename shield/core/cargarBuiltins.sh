@@ -18,11 +18,11 @@ $modulosPeriodicos"
 }
 alias actualizar_modulos="iniciarRegistrarModulos"
 function info_modulos {
-	for modulo in `echo $modulosComando | grep "$1" `
+	for modulo in `echo "$modulosComando" | grep "$1" `
 	do
 		$modulo informacion
 	done
-	for modulo in `echo $modulosPeriodicos | grep "$1" `
+	for modulo in `echo "$modulosPeriodicos" | grep "$1" `
 	do
 		$modulo informacion
 	done
