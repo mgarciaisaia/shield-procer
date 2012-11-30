@@ -145,7 +145,6 @@ void *lts(void *nada) {
 						t_pcb *pcb = nuevo_pcb(newfd);
 						char *pidS = pid_string(pcb->id_proceso);
 						dictionary_put(tabla_procesos, pidS, pcb);
-						free(pidS);
 						uint64_t pid = newfd;
 						socket_send(newfd, &pid, sizeof (pid));
 					}
@@ -164,12 +163,14 @@ void *lts(void *nada) {
 						FD_CLR(i, &master); // remove from master set
 					} else {
 						// we got some data from a client
-						printf("Lei esto en %d: <<%.*s>>\n", i, nbytes, (char *) buf);
+						printf("Lei esto en %d: <<%.*s>> (%d bytes)\n", i, nbytes, (char *) buf, nbytes);
+//						printf("%d %d\n", buf[nbytes -1], buf[nbytes]);
 						char *pidS = pid_string(i);
 						t_pcb *pcb = dictionary_get(tabla_procesos, pidS);
 						
 						if(pcb->prioridad > 20) {
 							pcb->prioridad = (uint8_t) *buf;
+							free(buf);
 						} else if(pcb->codigo == NULL) {
 							pcb->codigo = string_tokens(buf, '\n');
 							inicializar_pcb(pcb);

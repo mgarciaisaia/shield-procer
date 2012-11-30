@@ -158,7 +158,6 @@ void suspender_proceso(t_pcb *pcb) {
 	char *pid = pid_string(pcb->id_proceso);
 	printf("Suspendo el proceso %s\n", pid);
 	dictionary_put(tabla_suspendidos, pid, pcb);
-	free(pid);
 
 	sem_post(mmp);
 
@@ -202,6 +201,7 @@ void * lanzar_ios(void * nada){
 		printf("Creo el hilo de IO de %d\n", ((t_registro_io *)registro_void_io)->pcb->id_proceso);
 		pthread_t * thr_ejecutar_io = malloc(sizeof(pthread_t));
 		pthread_create(thr_ejecutar_io,NULL,ejecutar_io,registro_void_io);
+		free(thr_ejecutar_io);
 	}
 	return NULL;
 }

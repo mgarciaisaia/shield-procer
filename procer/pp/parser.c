@@ -46,6 +46,7 @@ void registrarSignalListener() {
 	handler->sa_flags = SA_RESTART;
 
 	sigaction(SIGUSR1, handler, NULL);
+	free(handler);
 }
 
 void concatenar_estado_pcb(char **buffer, t_pcb *pcb) {
