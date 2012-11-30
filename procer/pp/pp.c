@@ -41,6 +41,15 @@ void *pendientes_reanudar(void *nada) {
 	return NULL;
 }
 
+void *bloqueados_a_io(void *nada) {
+	while(1) {
+		void *registro_io = sync_queue_pop(cola_bloqueados);
+		sem_wait(threads_iot);
+		printf("El proceso %d va a IO desde bloqueados\n", ((t_registro_io *)registro_io)->pcb->id_proceso);
+		sync_queue_push(cola_io, registro_io);
+	}
+}
+
 void *finalizados(void *nada) {
 	int contador;
 	while(1) {
@@ -88,9 +97,10 @@ int main(void) {
 
 	registrarSignalListener();
 	
-    #define THREAD_COUNT 8
+    #define THREAD_COUNT 9
 	void *funciones_existentes[THREAD_COUNT] = { lts, pendientes_nuevos, sts,
-		procer, finalizados, lanzar_ios, pendientes_reanudar, monitorear_configuracion };
+		procer, finalizados, lanzar_ios, pendientes_reanudar,
+		monitorear_configuracion, bloqueados_a_io };
 	t_list *threads = list_create();
 	pthread_t *thread;
 	int index;
@@ -230,8 +240,8 @@ void * procer(void * nada){
 
 void * lanzar_ios(void * nada){
 	while(1){
-		void * registro_void_io = sync_queue_pop(cola_bloqueados);
-	//	printf("%d\n",registro_io->tiempo_acceso_io);
+		void * registro_void_io = sync_queue_pop(cola_io);
+		printf("Creo el hilo de IO de %d\n", ((t_registro_io *)registro_void_io)->pcb->id_proceso);
 		pthread_t * thr_ejecutar_io = malloc(sizeof(pthread_t));
 		pthread_create(thr_ejecutar_io,NULL,ejecutar_io,registro_void_io);
 	}
@@ -242,8 +252,9 @@ void * ejecutar_io(void * void_pcb_io){
 	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
 	printf("Ejecuto IO para %d por %d segundos\n", registro_io->pcb->id_proceso, registro_io->tiempo_acceso_io);
 	sleep(registro_io->tiempo_acceso_io);
-	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
+	printf("Termine IO para %d por %d segundos\n", registro_io->pcb->id_proceso, registro_io->tiempo_acceso_io);
 	sem_post(threads_iot);
+	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
 	free(registro_io);
 	return NULL;
 }

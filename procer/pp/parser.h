@@ -93,7 +93,7 @@ bool es_primer_pcb_de_menor_prioridad(void *, void *);
 bool es_primer_pcb_de_rafaga_mas_corta(void *, void *);
 
 bool es_io_bloqueante(char * );
-int procesar_io(char*, t_pcb*, bool);
+int procesar_io(char*, t_pcb*);
 int tiempo_ejecucion_io(char *);
 uint8_t es_bloqueante(char *);
 void * ejecutar_io(void *);

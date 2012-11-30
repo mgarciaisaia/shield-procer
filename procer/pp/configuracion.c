@@ -44,6 +44,9 @@ void inicializar_configuracion(){
 
 	threads_iot=malloc(sizeof(sem_t));
 	sem_init(threads_iot,0,config_get_int_value(config,"THREADS_IOT"));
+	int cantidad_hilos_io;
+	sem_getvalue(threads_iot, &cantidad_hilos_io);
+	printf("Threads IO: %d\n", cantidad_hilos_io);
 
 	puerto_tcp = config_get_long_value(config,"PUERTO_TCP");
 	time_io = config_get_int_value(config,"TIME_IO");

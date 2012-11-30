@@ -15,6 +15,7 @@ extern t_sync_queue *cola_reanudar;
 extern t_sync_queue *cola_listos;
 extern t_sync_queue *cola_fin_quantum;
 extern t_sync_queue *cola_bloqueados;
+extern t_sync_queue *cola_io;
 extern t_sync_queue *cola_fin_bloqueados;
 extern t_dictionary *tabla_suspendidos;
 extern t_sync_queue *cola_fin_programa;

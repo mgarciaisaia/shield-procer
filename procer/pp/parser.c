@@ -301,7 +301,11 @@ void eliminar_estructuras(t_pcb * pcb) {
 	free(pcb);
 }
 
-int procesar_io(char* instruccion, t_pcb* pcb, bool seguir_ejecutando) {
+/*
+ * Procesa una instruccion de entrada/salida y devuelve 1 si pudo procesarla
+ * (es decir, el proceso paso a bloqueado o entrada/salida), o 0 si no pudo
+ */
+int procesar_io(char* instruccion, t_pcb* pcb) {
 	// cargar los parametros que se encuentran en l ainstruccion
 	int tiempo_acceso = tiempo_ejecucion_io(instruccion);
 	if (es_bloqueante(instruccion)) {
@@ -310,22 +314,20 @@ int procesar_io(char* instruccion, t_pcb* pcb, bool seguir_ejecutando) {
 		registro_io->tiempo_acceso_io = tiempo_acceso;
 		registro_io->pcb = pcb;
 		sync_queue_push(cola_bloqueados, registro_io);
-		seguir_ejecutando = false;
 		printf("meti un io bloqueante\n");
 	} else {
-		// fixme: implementar no bloqueante
 		if(sem_trywait(threads_iot)){
 		//  devolver codigo error y seguir ejecutando
 			printf("no pudo realizar el wait\n");
 			return 0;
 		} else{
-			printf("pudo realizar el wait\n");
+			int cantidad_hilos_io;
+			sem_getvalue(threads_iot, &cantidad_hilos_io);
+			printf("Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d\n", pcb->id_proceso, cantidad_hilos_io);
 			t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 			registro_io->tiempo_acceso_io = tiempo_acceso;
 			registro_io->pcb = pcb;
-			sync_queue_push(cola_bloqueados, registro_io);
-			seguir_ejecutando = false;
-		// 	ejecutar
+			sync_queue_push(cola_io, registro_io);
 		}
 	}
 	return 1;
@@ -340,7 +342,7 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	char * instruccion = calloc(1, strlen(pcb->codigo[pc]) + 1);
 	strncpy(instruccion, pcb->codigo[pc], strlen(pcb->codigo[pc]));
 	string_trim(&instruccion);
-	printf("Procesando la instruccion %d: << %s >>\n", pc, instruccion);
+	printf("Procesando la instruccion %d de %d: << %s >>\n", pc, pcb->id_proceso, instruccion);
 	if (es_funcion(pcb, instruccion)) {
 		procesar_funcion(pcb, instruccion);
 	} else if (es_fin_funcion(instruccion)) {
@@ -351,7 +353,7 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 		procesar_salto(pcb, instruccion);
 	} else if (es_funcion_io(instruccion)) {
 		// cargar los parametros que se encuentran en l ainstruccion
-		if(procesar_io(instruccion, pcb, seguir_ejecutando)){
+		if(procesar_io(instruccion, pcb)){
 			seguir_ejecutando = false;
 		}
 	} else if (es_asignacion(instruccion)) {
@@ -460,6 +462,10 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 	}
 }
 
+/*
+ * Ejecuta una asignacion y devuelve 1 si debe seguir ejecutandose este proceso
+ * o 0 si el proceso fue a entrada/salida
+ */
 int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	// todo: usar tiempo_ejecucion para cuando consuma el quantum
 	(pcb->ultima_rafaga)++;
@@ -474,7 +480,6 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	if (es_funcion_io(expresion)) {
 #define IO_OK 1
 #define IO_FAIL 0
-// todo: ejecutar la sentencia io, devolver algo para que deje de ejecutar y pase a otro PCB
 		printf("es una io\n");
 			if(es_bloqueante(expresion)){
 				int tiempo_acceso = tiempo_ejecucion_io(expresion);
@@ -500,19 +505,17 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 					dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_OK);
 
 					int tiempo_acceso = tiempo_ejecucion_io(expresion);
-					printf("pudo realizar el wait\n");
+					int cantidad_hilos_io;
+					sem_getvalue(threads_iot, &cantidad_hilos_io);
+					printf("Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d\n", pcb->id_proceso, cantidad_hilos_io);
 					t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 					registro_io->tiempo_acceso_io = tiempo_acceso;
 					registro_io->pcb = pcb;
-					sync_queue_push(cola_bloqueados, registro_io);
+					sync_queue_push(cola_io, registro_io);
 					return 0;
 				}
 
 			}
-//				char ** sentencia_io_splitea do = string_split(sentencia,",");
-//				char * texto_parametro_1_io = (index(sentencia_io_spliteado[0],'('))[1];
-//				char * texto_parametro_2_io =  string_split(sentencia_io_spliteado[1],")")[0];
-		// pasar los parámetros para la función	io;
 	} else {
 		
 		int32_t operando = 1;

@@ -12,6 +12,7 @@ t_sync_queue *cola_reanudar;
 t_sync_queue *cola_listos;
 t_sync_queue *cola_fin_quantum;
 t_sync_queue *cola_bloqueados;
+t_sync_queue *cola_io;
 t_sync_queue *cola_fin_bloqueados;
 t_dictionary *tabla_suspendidos;
 t_sync_queue *cola_fin_programa;
@@ -33,6 +34,7 @@ void colas_initialize() {
 	cola_listos = sync_queue_create();
 	cola_fin_quantum = sync_queue_create();
 	cola_bloqueados = sync_queue_create();
+	cola_io = sync_queue_create();
 	cola_fin_bloqueados = sync_queue_create();
 	tabla_suspendidos = dictionary_create(NULL);
 	cola_fin_programa = sync_queue_create();
