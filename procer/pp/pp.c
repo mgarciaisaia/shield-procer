@@ -91,7 +91,7 @@ uint32_t no_encontro_pcb;
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
 	logger = log_create("PP.log", "PP", true, LOG_LEVEL_TRACE);
-    printf("Iniciado PROCER con PID %d\n", getpid());
+    log_info(logger, "Iniciado PROCER con PID %d\n", getpid());
 
 	colas_initialize();
 
