@@ -318,7 +318,7 @@ static void log_write_in_level(t_log* logger, t_log_level level, const char* mes
 		thread_id = pthread_self();
 
 		buffer = malloc(LOG_MAX_LENGTH_BUFFER + 1);
-		snprintf(buffer, LOG_MAX_LENGTH_BUFFER, "[%s] %s %s/(%d:%d): %s\n",
+		snprintf(buffer, LOG_MAX_LENGTH_BUFFER, "[%5s] %12s %s/(%d:%9d): %s\n",
 				log_level_as_string(level), time, logger->program_name,
 				logger->pid, thread_id,	message);
 
