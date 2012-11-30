@@ -32,16 +32,17 @@
 t_config *config_create(char *path) {
 	t_config *config = malloc(sizeof(t_config));
 
-	config->path = strdup(path);
-	config->properties = dictionary_create(free);
-
-	struct stat stat_file;
-	stat(path, &stat_file);
 	FILE* file = NULL;
 
 	file = fopen(path, "r");
 
 	if (file != NULL) {
+		config->path = strdup(path);
+		config->properties = dictionary_create(free);
+
+		struct stat stat_file;
+		stat(path, &stat_file);
+		
 		char* buffer = calloc(1, stat_file.st_size + 1);
 		fread(buffer, stat_file.st_size, 1, file);
 
@@ -60,6 +61,9 @@ t_config *config_create(char *path) {
 		free(lines);
 		free(buffer);
 		fclose(file);
+	} else {
+		perror("Error creating config");
+		return NULL;
 	}
 
 	return config;
