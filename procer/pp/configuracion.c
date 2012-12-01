@@ -86,16 +86,19 @@ void asignar_parametros_que_cambian_en_tiempo_de_ejecucion(t_config * config){
 }
 
 void asignar_algoritmo_de_ordenamiento(t_config * config){
+	quantum = 0;
 	char * string_algoritmo = config_get_string_value(config,"ALGORITMO");
-	if(string_equals_ignore_case(string_algoritmo,"FIFO")
-			|| string_equals_ignore_case(string_algoritmo,"RR")){
+	if(string_equals_ignore_case(string_algoritmo,"FIFO")) {
 		algoritmo_ordenamiento = es_primer_pcb_mas_antiguo;
+	} else if(string_equals_ignore_case(string_algoritmo,"RR")){
+		algoritmo_ordenamiento = es_primer_pcb_mas_antiguo;
+		quantum = config_get_int_value(config, "Q_EXP");
 	} else if(string_equals_ignore_case(string_algoritmo,"PRI")){
 		algoritmo_ordenamiento = es_primer_pcb_de_menor_prioridad;
 	} else if(string_equals_ignore_case(string_algoritmo,"SPN")){
 		algoritmo_ordenamiento = es_primer_pcb_de_rafaga_mas_corta;
 	}
-	log_info(logger, "Algoritmo de planificacion del STS: %s", string_algoritmo);
+	log_info(logger, "Algoritmo de planificacion del STS: %s (Quantum: %d)", string_algoritmo, quantum);
 }
 
 void asignar_lista_lap(t_config * config){
