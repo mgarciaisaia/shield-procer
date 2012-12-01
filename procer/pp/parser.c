@@ -153,7 +153,6 @@ char *pid_string(int pid) {
 }
 
 int es_un_comentario(char * linea) {
-	log_trace(logger, "La linea <<%s>> es comentario? %s", linea, linea[0] == '#' ? "Si" : "No");
 	return linea[0] == '#';
 }
 
@@ -223,6 +222,7 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	string_trim(&instruccion);
 	log_debug(logger, "Procesando la instruccion %d de %d: << %s >>", pc, pcb->id_proceso, instruccion);
 	if (es_funcion(pcb, instruccion)) {
+		log_error(logger, "No deberia ejecutar la funcion como instruccion");
 		procesar_funcion(pcb, instruccion);
 		sleep(time_sleep);
 	} else if (es_fin_funcion(instruccion)) {
@@ -469,12 +469,19 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	return 1;
 }
 
+int es_linea_en_blanco(char *linea) {
+	char *instruccion = strdup(linea);
+	string_trim(&instruccion);
+	return string_is_empty(instruccion);
+}
+
 /*
  * Salta instrucciones hasta encontrar una que no sea ni un comentario, ni una etiqueta
  */
 bool posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 	while (es_un_comentario(pcb->codigo[pcb->program_counter])
-			|| es_etiqueta(pcb, pcb->codigo[pcb->program_counter])) {
+			|| es_etiqueta(pcb, pcb->codigo[pcb->program_counter])
+			|| es_linea_en_blanco(pcb->codigo[pcb->program_counter])) {
 		log_trace(logger, "Salteo la linea %d <<%s>>", pcb->program_counter,
 				pcb->codigo[pcb->program_counter]);
 		(pcb->program_counter)++;
@@ -483,6 +490,8 @@ bool posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 		log_info(logger, "Alcanzado el fin del programa en %d: <<%s>>",
 				pcb->program_counter, pcb->codigo[pcb->program_counter]);
 		return false;
+	} else if(es_funcion(pcb, pcb->codigo[pcb->program_counter])) {
+		procesar_funcion(pcb, pcb->codigo[pcb->program_counter]);
 	}
 	log_debug(logger, "Proxima instruccion a ejecutar de %d: <<%s>> (linea %d)",
 		pcb->id_proceso, pcb->codigo[pcb->program_counter], pcb->program_counter);
