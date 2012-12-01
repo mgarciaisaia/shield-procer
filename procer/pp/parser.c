@@ -575,5 +575,8 @@ uint8_t es_bloqueante(char * instruccion){
 	strncpy(segundo_argumento_io,instruccion_spliteada[1],strlen(instruccion_spliteada[1]) - 1);
 	uint8_t uint_segundo_argumento_io = strtol(segundo_argumento_io,NULL,0);
 	free(segundo_argumento_io);
+	free(instruccion_spliteada[0]);
+	free(instruccion_spliteada[1]);
+	free(instruccion_spliteada);
 	return uint_segundo_argumento_io;
 }
