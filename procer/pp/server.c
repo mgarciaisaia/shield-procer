@@ -20,6 +20,7 @@
 #include "commons/collections/sync_queue.h"
 #include "commons/string.h"
 #include "configuracion.h"
+#include <errno.h>
 
 #define ERROR_MPS "Error - se alcanzo el maximo de procesos en el sistema (MPS)"
 
@@ -63,7 +64,7 @@ void *lts(void *nada) {
 	hints.ai_flags = AI_PASSIVE;
 	log_info(logger, "El puerto de escucha es %s", puerto_tcp);
 	if ((rv = getaddrinfo(NULL, puerto_tcp, &hints, &ai)) != 0) {
-		log_error(logger, "selectserver: %s", gai_strerror(rv));
+		log_error(logger, "Error obteniendo la direccion local: %s", gai_strerror(rv));
 		exit(1);
 	}
 
@@ -86,7 +87,7 @@ void *lts(void *nada) {
 
 	// if we got here, it means we didn't get bound
 	if (p == NULL) {
-		fprintf(stderr, "selectserver: failed to bind\n");
+		log_error(logger, "Error bindeando el servidor");
 		exit(2);
 	}
 
@@ -94,7 +95,7 @@ void *lts(void *nada) {
 
 	// listen
 	if (listen(listener, 10) == -1) {
-		perror("listen");
+		log_error(logger, "Error %d escuchando el puerto %s: %s", errno, puerto_tcp, strerror(errno));
 		exit(3);
 	}
 
@@ -108,7 +109,7 @@ void *lts(void *nada) {
 	for (;;) {
 		read_fds = master; // copy it
 		if (select(fdmax + 1, &read_fds, NULL, NULL, NULL) == -1) {
-			perror("select");
+			log_error(logger, "Error %d ejecutando select: %s", errno, strerror(errno));
 			exit(4);
 		}
 
@@ -123,10 +124,9 @@ void *lts(void *nada) {
 							&addrlen);
 
 					if (newfd == -1) {
-						perror("accept");
+						log_error(logger, "Error %d aceptando una nueva conexion: %s", errno, strerror(errno));
 					} else {
-						printf("selectserver: new connection from %s on "
-								"socket %d\n",
+						log_info(logger, "Nueva conexion de %s en %d", 
 								inet_ntop(remoteaddr.ss_family,
 								get_in_addr((struct sockaddr*) &remoteaddr),
 								remoteIP, INET6_ADDRSTRLEN),
@@ -134,7 +134,7 @@ void *lts(void *nada) {
 						if(sem_trywait(mps)) {
 							// no hay mps disponible
 							socket_send(newfd, ERROR_MPS, strlen(ERROR_MPS));
-							printf("Descarto una conexion en %d porque no tengo mas MPS\n", newfd);
+							log_info(logger, "Rechazo una conexion en %d porque no tengo mas MPS", newfd);
 							close(newfd);
 							break;
 						}
@@ -150,43 +150,44 @@ void *lts(void *nada) {
 					}
 				} else {
 					// handle data from a client
-					printf("Voy a leer algo en %d\n", i);
+					log_trace(logger, "Nuevos datos en %d", i);
 					if ((nbytes = socket_receive(i, (void **) &buf)) <= 0) {
 						// got error or connection closed by client
 						if (nbytes == 0) {
 							// connection closed
-							printf("selectserver: socket %d hung up\n", i);
+							log_info(logger, "El cliente del proceso %d cerro la conexion", i);
 						} else {
-							perror("recv");
+							log_error(logger, "Error %d ejecutando recv: %s", errno, strerror(errno));
 						}
 						close(i); // bye!
 						FD_CLR(i, &master); // remove from master set
 					} else {
 						// we got some data from a client
-						printf("Lei esto en %d: <<%.*s>> (%d bytes)\n", i, nbytes, (char *) buf, nbytes);
-//						printf("%d %d\n", buf[nbytes -1], buf[nbytes]);
+						log_trace(logger, "Lei esto en %d: <<%.*s>> (%d bytes)", i, nbytes, (char *) buf, nbytes);
 						char *pidS = pid_string(i);
 						t_pcb *pcb = dictionary_get(tabla_procesos, pidS);
 						
 						if(pcb->prioridad > 20) {
 							pcb->prioridad = (uint8_t) *buf;
+							log_debug(logger, "La prioridad del proceso %d es %d", pcb->id_proceso, pcb->prioridad);
 							free(buf);
 						} else if(pcb->codigo == NULL) {
 							pcb->codigo = string_tokens(buf, '\n');
 							inicializar_pcb(pcb);
+							log_lsch(logger, "Muevo el proceso %d a la cola de pendientes_nuevos", pcb->id_proceso);
 							sync_queue_push(cola_pendientes_nuevos, pcb);
 						} else {
 							if(strncmp("1REANUDARPROCESO", buf, strlen("1REANUDARPROCESO") + 1) == 0) {
-								printf("Reanudo el proceso %s\n", pidS);
+								log_debug(logger, "Llego un pedido para reanudar el proceso %d", i);
 								pcb = dictionary_remove(tabla_suspendidos, pidS);
 								if(pcb == NULL) {
-									printf("Llego un pedido de reanudar un proceso no-suspendido\n");
+									log_warning(logger, "Llego un pedido de reanudar un proceso no-suspendido: %d", i);
 								} else {
-									printf("Tiro el pcb %d a pendientes_reanudar\n", pcb->id_proceso);
+									log_lsch(logger, "Muevo el proceso %d a pendientes_reanudar", pcb->id_proceso);
 									sync_queue_push(cola_pendientes_reanudar, pcb);
 								}
 							} else {
-								printf("Llego un mensaje cualquiera: %.*s\n", nbytes, buf);
+								log_warning(logger, "Mensaje desconocido: %.*s", nbytes, buf);
 							}
 						}
 						free(pidS);

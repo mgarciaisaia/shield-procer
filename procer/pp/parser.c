@@ -121,17 +121,17 @@ void inicializar_pcb(t_pcb *pcb) {
 					"comienzo_funcion")) {
 				cargar_funciones_en_diccionario(pcb->d_funciones, palabra[1],
 						(void *) i);
-				log_trace(logger, "La funcion %s empieza en la linea %d\n", palabra[1], i);
+				log_trace(logger, "La funcion %s empieza en la linea %d", palabra[1], i);
 			} else if ((index(palabra[0], ':')) != NULL) {
 				cargar_etiquetas_en_diccionario(pcb->d_etiquetas, palabra[0],
 						(void *) i);
-				log_trace(logger, "La etiqueta %s esta en la linea %d\n", palabra[0], i);
+				log_trace(logger, "La etiqueta %s esta en la linea %d", palabra[0], i);
 			}
 		}
 		i++;
 	}
 	posicionarse_proxima_instruccion_ejecutable(pcb);
-	log_debug(logger, "La primer instruccion ejecutable de %d es la %"PRIu32"\n",
+	log_debug(logger, "La primer instruccion ejecutable de %d es la %"PRIu32,
 			pcb->id_proceso, pcb->program_counter);
 	pcb->valor_estimacion_anterior = i;
 }
@@ -248,11 +248,12 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	int id_proceso = pcb->id_proceso;
 	if(!programa_continua){
 		int cantidad_mmp;
+		log_lsch(logger, "Finalizo la ejecucion de %d, lo envio a finalizados",
+				id_proceso);
 		sync_queue_push(cola_fin_programa,pcb);
 		sem_post(mmp);
 		sem_getvalue(mmp, &cantidad_mmp);
-		log_lsch(logger, "Finalizo la ejecucion de %d, lo envio a finalizados. MMP queda en %d",
-				id_proceso, cantidad_mmp);
+		log_debug(logger, "Finalice %d, MMP queda en %d", id_proceso, cantidad_mmp);
 	}
 	seguir_ejecutando = programa_continua && seguir_ejecutando;
 	log_debug(logger, "%s ejecutando el proceso %d", seguir_ejecutando ? "Sigo" : "No sigo", id_proceso);
@@ -459,9 +460,10 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 		}
 		
 		if(retardo != NULL) {
-			printf("Duermo %d segundos por asignacion\n", atoi(retardo + 1));
+			log_debug(logger, "Duermo %d segundos especificados en una asignacion", atoi(retardo + 1));
 			sleep(atoi(retardo + 1));
 		} else {
+			log_debug(logger, "Duermo los %d segundos standar tras ejecutar una asignacion", time_sleep);
 			sleep(time_sleep);
 		}
 	}
@@ -473,11 +475,18 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
  */
 bool posicionarse_proxima_instruccion_ejecutable(t_pcb * pcb) {
 	while (es_un_comentario(pcb->codigo[pcb->program_counter])
-			|| es_etiqueta(pcb, pcb->codigo[pcb->program_counter]))
+			|| es_etiqueta(pcb, pcb->codigo[pcb->program_counter])) {
+		log_trace(logger, "Salteo la linea %d <<%s>>", pcb->program_counter,
+				pcb->codigo[pcb->program_counter]);
 		(pcb->program_counter)++;
+	}
 	if (es_fin_programa(pcb->codigo[pcb->program_counter])) {
+		log_info(logger, "Alcanzado el fin del programa en %d: <<%s>>",
+				pcb->program_counter, pcb->codigo[pcb->program_counter]);
 		return false;
 	}
+	log_debug(logger, "Proxima instruccion a ejecutar de %d: <<%s>> (linea %d)",
+		pcb->id_proceso, pcb->codigo[pcb->program_counter], pcb->program_counter);
 	return true;
 }
 
@@ -500,6 +509,8 @@ double calcular_rafaga(double valor_estimacion_anterior, double ultima_rafaga) {
 bool es_primer_pcb_mas_antiguo(void * reg_void_1, void * reg_void_2) {
 	t_reg_listos * reg_1 = (t_reg_listos *) reg_void_1;
 	t_reg_listos * reg_2 = (t_reg_listos *) reg_void_2;
+	log_trace(logger, "Tiempo entrada de %d: %lf", reg_1->pcb->id_proceso,
+			reg_1->tiempo_entrada_listos);
 	return reg_1->tiempo_entrada_listos < reg_2->tiempo_entrada_listos;
 }
 

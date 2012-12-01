@@ -50,7 +50,6 @@ void *bloqueados_a_io(void *nada) {
 		t_registro_io *registro_io = sync_queue_pop(cola_bloqueados);
 		log_debug(logger, "Saco el proceso %d de bloqueados", registro_io->pcb->id_proceso);
 		sem_wait(threads_iot);
-		printf("El proceso %d va a IO desde bloqueados\n", registro_io->pcb->id_proceso);
 		sync_queue_push(cola_io, registro_io);
 		log_lsch(logger, "Muevo el proceso %d de bloqueados a IO", registro_io->pcb->id_proceso);
 	}
@@ -98,7 +97,7 @@ uint32_t no_encontro_pcb;
 #define ERROR_RECEIVE_PRIORITY 4
 int main(void) {
 	logger = log_create("PP.log", "PP", true, LOG_LEVEL_TRACE);
-    log_info(logger, "Iniciado PROCER con PID %d\n", getpid());
+    log_info(logger, "Iniciado PROCER con PID %d", getpid());
 
 	colas_initialize();
 
@@ -226,10 +225,10 @@ void * lanzar_ios(void * nada){
 void * ejecutar_io(void * void_pcb_io){
 	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
 	int tiempo_sleep = registro_io->tiempo_acceso_io * time_io;
-	log_debug(logger, "Ejecuto %d unidades de IO para %d (%d segundos)\n",
+	log_debug(logger, "Ejecuto %d unidades de IO para %d (%d segundos)",
 			registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
 	sleep(tiempo_sleep);
-	log_debug(logger, "Termine %d unidades de IO para %d (%d segundos)\n",
+	log_debug(logger, "Termine %d unidades de IO para %d (%d segundos)",
 			registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
 	sem_post(threads_iot);
 	sem_getvalue(threads_iot, &tiempo_sleep);
@@ -249,7 +248,7 @@ void * monitorear_configuracion(void * nada){
 	// Al inicializar inotify este nos devuelve un descriptor de archivo
 	int file_descriptor = inotify_init();
 	if (file_descriptor < 0) {
-		perror("inotify_init");
+		log_error(logger, "Error %d inicializando inotify: %s", errno, strerror(errno));
 	}
 
 	// Creamos un monitor sobre un path indicando que eventos queremos escuchar
@@ -263,7 +262,7 @@ void * monitorear_configuracion(void * nada){
 	// referente a los eventos ocurridos
 		int length = read(file_descriptor, buffer, BUF_LEN);
 		if (length < 0) {
-			perror("read");
+			log_error(logger, "Error %d leyendo el file descriptor de inotify: %s", errno, strerror(errno));
 		}
 
 		int offset = 0;
@@ -279,10 +278,8 @@ void * monitorear_configuracion(void * nada){
 					(struct inotify_event *) &buffer[offset];
 
 			if (event->mask & IN_MODIFY) {
-				if (event->mask & IN_ISDIR) {
-					printf("The directory %s was modified.\n", event->name);
-				} else {
-					printf("se produjo un cambio en el archivo de configuracion, volvio a cargar\n");
+				if (!(event->mask & IN_ISDIR)) {
+					log_info(logger, "Cambios detectados en el archivo de configuracion. Recargando...");
 					config = config_create(PATH_CONFIG);
 					asignar_parametros_que_cambian_en_tiempo_de_ejecucion(config);
 					config_destroy(config);
