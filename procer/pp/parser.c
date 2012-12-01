@@ -170,8 +170,9 @@ void cargar_variables_en_diccionario(t_dictionary * diccionario,
 void cargar_funciones_en_diccionario(t_dictionary * diccionario,
 		char * nombre_funcion, void * nro_linea) {
 	char * parentesis = "()";
-	string_append(&nombre_funcion, parentesis);
-	dictionary_put(diccionario, strdup(nombre_funcion), nro_linea);
+	char *prototipo_funcion = strdup(nombre_funcion);
+	string_append(&prototipo_funcion, parentesis);
+	dictionary_put(diccionario, prototipo_funcion, nro_linea);
 }
 
 void cargar_etiquetas_en_diccionario(t_dictionary * diccionario,
