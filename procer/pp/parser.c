@@ -163,7 +163,9 @@ void cargar_variables_en_diccionario(t_dictionary * diccionario,
 	int i;
 	for (i = 0; variable[i] != NULL; i++) {
 		dictionary_put(diccionario, strdup(variable[i]), 0);
+		free(variable[i]);
 	}
+	free(variable);
 }
 
 void cargar_funciones_en_diccionario(t_dictionary * diccionario,
