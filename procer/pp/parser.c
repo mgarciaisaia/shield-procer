@@ -314,6 +314,7 @@ void procesar_fin_funcion(t_pcb * pcb, char * instruccion) {
 			registro_stack->retorno);
 	pcb->program_counter = registro_stack->retorno;
 	free(registro_stack->nombre_funcion);
+	free(registro_stack);
 }
 
 void procesar_funcion_imprimir(t_pcb * pcb, char * instruccion) {
