@@ -566,6 +566,9 @@ int tiempo_ejecucion_io(char * instruccion){
 	char * primer_argumento_io = index(instruccion_spliteada[0],'(');
 	primer_argumento_io++;
 	uint8_t uint_primer_argumento_io = strtol(primer_argumento_io,NULL,0);
+	free(instruccion_spliteada[0]);
+	free(instruccion_spliteada[1]);
+	free(instruccion_spliteada);
 	return uint_primer_argumento_io;
 }
 
