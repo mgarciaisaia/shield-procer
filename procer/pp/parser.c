@@ -472,7 +472,9 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 int es_linea_en_blanco(char *linea) {
 	char *instruccion = strdup(linea);
 	string_trim(&instruccion);
-	return string_is_empty(instruccion);
+	int is_empty = string_is_empty(instruccion);
+	free(instruccion);
+	return is_empty;
 }
 
 /*
