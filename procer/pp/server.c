@@ -61,9 +61,9 @@ void *lts(void *nada) {
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
-	printf("El puerto de escucha es %s\n", puerto_tcp);
+	log_info(logger, "El puerto de escucha es %s", puerto_tcp);
 	if ((rv = getaddrinfo(NULL, puerto_tcp, &hints, &ai)) != 0) {
-		fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
+		log_error(logger, "selectserver: %s", gai_strerror(rv));
 		exit(1);
 	}
 

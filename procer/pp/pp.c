@@ -17,44 +17,51 @@
 #include "commons/log.h"
 
 void *pendientes_nuevos(void *nada) {
+	log_debug(logger, "Inicia el thread de pendientes_nuevos a nuevos");
 	int valor;
 	while(1){
 		t_pcb * pcb = sync_queue_pop(cola_pendientes_nuevos);
+		log_debug(logger, "Saco el proceso %d de pendientes_nuevos", pcb->id_proceso);
 		sem_wait(mmp);
 		sync_queue_push(cola_nuevos,pcb);
 		sem_getvalue(mmp,&valor);
-		//todo: loguear
-		printf("agregue un pcb: %d\n", valor);
+		log_lsch(logger, "Muevo el proceso %d de pendientes_nuevos a nuevos. MMP: %d", pcb->id_proceso, valor);
 	}
 	return NULL;
 }
 
 void *pendientes_reanudar(void *nada) {
+	log_debug(logger, "Inicia el thread de pendientes_reanudar a reanudar");
 	int valor;
 	while(1){
 		t_pcb * pcb = sync_queue_pop(cola_pendientes_reanudar);
+		log_debug(logger, "Saco el proceso %d de pendientes_reanudar", pcb->id_proceso);
 		sem_wait(mmp);
 		sync_queue_push(cola_reanudar,pcb);
 		sem_getvalue(mmp,&valor);
-		//todo: loguear
-		printf("Pase el proceso %d de pendientes_reanudar a reanudar. MMP: %d\n", pcb->id_proceso, valor);
+		log_lsch(logger, "Muevo el proceso %d de pendientes_reanudar a reanudar. MMP: %d", pcb->id_proceso, valor);
 	}
 	return NULL;
 }
 
 void *bloqueados_a_io(void *nada) {
+	log_debug(logger, "Inicia el thread de bloqueados a entrada/salida");
 	while(1) {
-		void *registro_io = sync_queue_pop(cola_bloqueados);
+		t_registro_io *registro_io = sync_queue_pop(cola_bloqueados);
+		log_debug(logger, "Saco el proceso %d de bloqueados", registro_io->pcb->id_proceso);
 		sem_wait(threads_iot);
-		printf("El proceso %d va a IO desde bloqueados\n", ((t_registro_io *)registro_io)->pcb->id_proceso);
+		printf("El proceso %d va a IO desde bloqueados\n", registro_io->pcb->id_proceso);
 		sync_queue_push(cola_io, registro_io);
+		log_lsch(logger, "Muevo el proceso %d de bloqueados a IO", registro_io->pcb->id_proceso);
 	}
 }
 
 void *finalizados(void *nada) {
+	log_debug(logger, "Inicia el thread consumidor de finalizados");
 	int contador;
 	while(1) {
 		t_pcb *pcb = sync_queue_pop(cola_fin_programa);
+		log_debug(logger, "Saco el proceso %d de finalizados", pcb->id_proceso);
 		
 		char *pid = pid_string(pcb->id_proceso);
 		dictionary_remove(tabla_procesos, pid);
@@ -62,7 +69,7 @@ void *finalizados(void *nada) {
 		
 		sem_post(mps);
 		sem_getvalue(mps, &contador);
-		printf("elimine un pcb finalizado: %d\n", contador);
+		log_lsch(logger, "Saco el proceso %d de finalizados y lo elimino del sistema", pcb->id_proceso);
 		
 		char *mensaje_fin = strdup("0");
 		concatenar_estado_pcb(&mensaje_fin, pcb);
@@ -125,6 +132,7 @@ int main(void) {
 }
 
 void * sts(void * nada) {
+	log_debug(logger, "Inicio el thread del STS");
 	while(1){
 		encolar_en_listos();
 	}
@@ -139,7 +147,6 @@ void encolar_en_listos(){
 		if(no_encontro_pcb) {
 			t_pcb *pcb = sync_queue_try_pop(sync_queue);
 			if(pcb != NULL) {
-				printf("STS: saque un elemento, lo mando a ready\n");
 				no_encontro_pcb = 0;
 				struct timeval tv;
 				gettimeofday(&tv, NULL);
@@ -147,6 +154,7 @@ void encolar_en_listos(){
 				t_reg_listos * registro_listos = malloc(sizeof(t_reg_listos));
 				registro_listos->pcb = pcb;
 				registro_listos->tiempo_entrada_listos = time_in_usec;
+				log_lsch(logger, "STS: saco el proceso %d y lo mando a ready", pcb->id_proceso);
 
 				sync_queue_ordered_insert(cola_listos,registro_listos,algoritmo_ordenamiento);
 			}
@@ -158,10 +166,12 @@ void encolar_en_listos(){
 
 void suspender_proceso(t_pcb *pcb) {
 	char *pid = pid_string(pcb->id_proceso);
-	printf("Suspendo el proceso %s\n", pid);
 	dictionary_put(tabla_suspendidos, pid, pcb);
 
+	int valor_mmp;
 	sem_post(mmp);
+	sem_getvalue(mmp, &valor_mmp);
+	log_lsch(logger, "Suspendo el proceso %s. MMP: %d", pid, valor_mmp);
 
 	// mensaje con 1 hace que el PI pida al usuario reanudar
 	char *mensaje = strdup("1");
@@ -172,10 +182,12 @@ void suspender_proceso(t_pcb *pcb) {
 }
 
 void * procer(void * nada){
+	log_debug(logger, "Inicio el hilo procer");
 	while(1){
 		t_reg_listos * registro_listo = sync_queue_pop(cola_listos);
 		t_pcb *pcb = registro_listo->pcb;
 		int pid_proceso = pcb->id_proceso;
+		log_lsch(logger, "Saco el proceso %d de listos y lo ejecuto", pid_proceso);
 		free(registro_listo);
 		int instrucciones_ejecutadas = 0;
 		bool seguir_ejecutando = true;
@@ -188,19 +200,22 @@ void * procer(void * nada){
 				seguir_ejecutando = false;
 			} else if(seguir_ejecutando && quantum && instrucciones_ejecutadas >= quantum - 1) {
 				sync_queue_push(cola_fin_quantum, pcb);
+				log_lsch(logger, "Paso el proceso %d de ejecucion a fin de quantum", pid_proceso);
 				seguir_ejecutando = false;
 			}
 			instrucciones_ejecutadas++;
 		}
-		printf("Ejecute %d instrucciones del proceso %d\n", instrucciones_ejecutadas, pid_proceso);
+		log_debug(logger, "Ejecute %d instrucciones del proceso %d", instrucciones_ejecutadas, pid_proceso);
 	}
 	return NULL;
 }
 
 void * lanzar_ios(void * nada){
+	log_debug(logger, "Inicio el hilo lanzador de E/S");
 	while(1){
 		void * registro_void_io = sync_queue_pop(cola_io);
-		printf("Creo el hilo de IO de %d\n", ((t_registro_io *)registro_void_io)->pcb->id_proceso);
+		log_lsch(logger, "Saco el proceso %d de la cola E/S y ejecuto la E/S",
+				((t_registro_io *)registro_void_io)->pcb->id_proceso);
 		pthread_t * thr_ejecutar_io = malloc(sizeof(pthread_t));
 		pthread_create(thr_ejecutar_io,NULL,ejecutar_io,registro_void_io);
 		free(thr_ejecutar_io);
@@ -211,10 +226,16 @@ void * lanzar_ios(void * nada){
 void * ejecutar_io(void * void_pcb_io){
 	t_registro_io * registro_io = (t_registro_io *) void_pcb_io;
 	int tiempo_sleep = registro_io->tiempo_acceso_io * time_io;
-	printf("Ejecuto %d unidades de IO para %d (%d segundos)\n", registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
+	log_debug(logger, "Ejecuto %d unidades de IO para %d (%d segundos)\n",
+			registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
 	sleep(tiempo_sleep);
-	printf("Termine %d unidades de IO para %d (%d segundos)\n", registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
+	log_debug(logger, "Termine %d unidades de IO para %d (%d segundos)\n",
+			registro_io->tiempo_acceso_io, registro_io->pcb->id_proceso, tiempo_sleep);
 	sem_post(threads_iot);
+	sem_getvalue(threads_iot, &tiempo_sleep);
+	log_lsch(logger,
+		"Termino una IO y mando el proceso %d a fin bloqueados. Threads IO libres: %d",
+			registro_io->pcb->id_proceso, tiempo_sleep);
 	sync_queue_push(cola_fin_bloqueados,registro_io->pcb);
 	free(registro_io);
 	return NULL;

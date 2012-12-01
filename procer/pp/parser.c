@@ -46,6 +46,7 @@ void registrarSignalListener() {
 	handler->sa_flags = SA_RESTART;
 
 	sigaction(SIGUSR1, handler, NULL);
+	log_debug(logger, "Registro el handler de la signal SIGUSR1");
 	free(handler);
 }
 
@@ -85,6 +86,7 @@ void concatenar_estado_pcb(char **buffer, t_pcb *pcb) {
 }
 
 t_pcb *nuevo_pcb(int id_proceso) {
+	log_trace(logger, "Creo un PCB con PID %d", id_proceso);
 	t_pcb *pcb = malloc(sizeof(t_pcb));
 	pcb->id_proceso = id_proceso;
 	pcb->prioridad = 40;
@@ -99,6 +101,7 @@ t_pcb *nuevo_pcb(int id_proceso) {
 
 void inicializar_pcb(t_pcb *pcb) {
 	int i = 0;
+	log_debug(logger, "Inicializo el PCB %d", pcb->id_proceso);
 	//primer recorrido para cargar estructuras del PCB
 	//ID, PC, DATOS, STACK, CODIGO -- DICCIONARIO DE FUNCIONES, DICCIONARIO DE ETIQUETAS
 	while (pcb->codigo[i] != NULL) {
@@ -107,31 +110,34 @@ void inicializar_pcb(t_pcb *pcb) {
 #define SEPARADOR_PALABRAS ' '
 			char ** palabra = string_tokens(pcb->codigo[i], SEPARADOR_PALABRAS);
 			if (string_equals_ignore_case(palabra[0], "variables")) {
+				log_trace(logger, "La linea %d declara las variables: <<%s>>", i, pcb->codigo[i]);
 				cargar_variables_en_diccionario(pcb->datos, palabra[1]);
 			} else if (string_equals_ignore_case(palabra[0],
 					"comienzo_programa")) {
 				pcb->program_counter = i + 1;
-				printf("El programa comienza en la linea %d\n",
-						pcb->program_counter);
+				log_debug(logger, "El programa %d comienza en la linea %d",
+						pcb->id_proceso, pcb->program_counter + 1);
 			} else if (string_equals_ignore_case(palabra[0],
 					"comienzo_funcion")) {
 				cargar_funciones_en_diccionario(pcb->d_funciones, palabra[1],
 						(void *) i);
-				printf("La funcion %s empieza en la linea %d\n", palabra[1], i);
+				log_trace(logger, "La funcion %s empieza en la linea %d\n", palabra[1], i);
 			} else if ((index(palabra[0], ':')) != NULL) {
 				cargar_etiquetas_en_diccionario(pcb->d_etiquetas, palabra[0],
 						(void *) i);
-				printf("La etiqueta %s esta en la linea %d\n", palabra[0], i);
+				log_trace(logger, "La etiqueta %s esta en la linea %d\n", palabra[0], i);
 			}
 		}
 		i++;
 	}
 	posicionarse_proxima_instruccion_ejecutable(pcb);
-	printf("La primer instruccion ejecutable de %d es la %"PRIu32"\n", pcb->id_proceso, pcb->program_counter);
+	log_debug(logger, "La primer instruccion ejecutable de %d es la %"PRIu32"\n",
+			pcb->id_proceso, pcb->program_counter);
 	pcb->valor_estimacion_anterior = i;
 }
 
 void destruir_pcb(t_pcb *pcb) {
+	log_trace(logger, "Destruyo el PCB %d", pcb->id_proceso);
 	dictionary_destroy(pcb->datos);
 	dictionary_destroy(pcb->d_funciones);
 	dictionary_destroy(pcb->d_etiquetas);
@@ -147,6 +153,7 @@ char *pid_string(int pid) {
 }
 
 int es_un_comentario(char * linea) {
+	log_trace(logger, "La linea <<%s>> es comentario? %s", linea, linea[0] == '#' ? "Si" : "No");
 	return linea[0] == '#';
 }
 
@@ -180,21 +187,21 @@ int procesar_io(char* instruccion, t_pcb* pcb) {
 	// cargar los parametros que se encuentran en l ainstruccion
 	int tiempo_acceso = tiempo_ejecucion_io(instruccion);
 	if (es_bloqueante(instruccion)) {
-		// fixme: crear estructura para las io, que guarde el tiempo
 		t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 		registro_io->tiempo_acceso_io = tiempo_acceso;
 		registro_io->pcb = pcb;
 		sync_queue_push(cola_bloqueados, registro_io);
-		printf("meti un io bloqueante\n");
+		log_lsch(logger, "Mando a bloqueados a %d para una IO de %d", pcb->id_proceso, tiempo_acceso);
 	} else {
 		if(sem_trywait(threads_iot)){
 		//  devolver codigo error y seguir ejecutando
-			printf("no pudo realizar el wait\n");
+			log_info(logger, "No se pudo realizar la entrada/salida no bloqueante");
 			return 0;
 		} else{
 			int cantidad_hilos_io;
 			sem_getvalue(threads_iot, &cantidad_hilos_io);
-			printf("Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d\n", pcb->id_proceso, cantidad_hilos_io);
+			log_lsch(logger, "Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d",
+					pcb->id_proceso, cantidad_hilos_io);
 			t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 			registro_io->tiempo_acceso_io = tiempo_acceso;
 			registro_io->pcb = pcb;
@@ -213,7 +220,7 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	char * instruccion = calloc(1, strlen(pcb->codigo[pc]) + 1);
 	strncpy(instruccion, pcb->codigo[pc], strlen(pcb->codigo[pc]));
 	string_trim(&instruccion);
-	printf("Procesando la instruccion %d de %d: << %s >>\n", pc, pcb->id_proceso, instruccion);
+	log_debug(logger, "Procesando la instruccion %d de %d: << %s >>", pc, pcb->id_proceso, instruccion);
 	if (es_funcion(pcb, instruccion)) {
 		procesar_funcion(pcb, instruccion);
 		sleep(time_sleep);
@@ -238,12 +245,17 @@ bool ejecutarInstruccion(t_pcb * pcb) {
 	free(instruccion);
 	(pcb->program_counter)++;
 	bool programa_continua = posicionarse_proxima_instruccion_ejecutable(pcb);
+	int id_proceso = pcb->id_proceso;
 	if(!programa_continua){
-		printf("finalizo %d\n",pcb->id_proceso);
+		int cantidad_mmp;
 		sync_queue_push(cola_fin_programa,pcb);
 		sem_post(mmp);
+		sem_getvalue(mmp, &cantidad_mmp);
+		log_lsch(logger, "Finalizo la ejecucion de %d, lo envio a finalizados. MMP queda en %d",
+				id_proceso, cantidad_mmp);
 	}
 	seguir_ejecutando = programa_continua && seguir_ejecutando;
+	log_debug(logger, "%s ejecutando el proceso %d", seguir_ejecutando ? "Sigo" : "No sigo", id_proceso);
 	return seguir_ejecutando;
 }
 
@@ -281,8 +293,6 @@ int es_un_salto(char * instruccion) {
 }
 
 void procesar_funcion(t_pcb * pcb, char * instruccion) {
-	printf("Entro a la funcion %s en la linea %d\n", instruccion,
-			pcb->program_counter);
 	t_registro_stack *registro_stack = malloc(sizeof(t_registro_stack));
 	registro_stack->nombre_funcion = calloc(1, strlen(instruccion) + 1);
 	registro_stack->retorno = pcb->program_counter;
@@ -290,13 +300,16 @@ void procesar_funcion(t_pcb * pcb, char * instruccion) {
 	stack_push(pcb->stack, registro_stack);
 	pcb->program_counter = (uint32_t) dictionary_get(pcb->d_funciones,
 			instruccion);
+	log_trace(logger, "En %d, salto a la funcion %s (linea %d)",
+			registro_stack->retorno, instruccion, pcb->program_counter);
 }
 
 void procesar_fin_funcion(t_pcb * pcb, char * instruccion) {
-	printf("Salgo de la funcion %s en la linea %d\n", instruccion,
-			pcb->program_counter);
 	t_registro_stack *registro_stack = (t_registro_stack *) stack_pop(
 			pcb->stack);
+	log_trace(logger, "En la linea %d, salgo de %s y retorno a la linea %d",
+			pcb->program_counter, registro_stack->nombre_funcion,
+			registro_stack->retorno);
 	pcb->program_counter = registro_stack->retorno;
 	free(registro_stack->nombre_funcion);
 }
@@ -306,6 +319,7 @@ void procesar_funcion_imprimir(t_pcb * pcb, char * instruccion) {
 	(pcb->ultima_rafaga)++;
 	int valor_variable = (int) dictionary_get(pcb->datos, palabra[1]);
 	imprimir(pcb->id_proceso, palabra[1], valor_variable);
+	log_debug(logger, "Imprimo la variable %s: %d", palabra[1], valor_variable);
 }
 
 void procesar_salto(t_pcb * pcb, char * instruccion) {
@@ -315,10 +329,15 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 	char ** palabra = string_split(sin_retardo, " ");
 	int valor_variable = (int) dictionary_get(pcb->datos, palabra[1]);
 	if (string_equals_ignore_case(palabra[0], "ssc")) {
+		log_trace(logger, "Proceso un salto ssc para la variable %s = %d",
+				palabra[1], valor_variable);
 		if (valor_variable == 0) {
 			string_append(&palabra[2], ":");
 			uint32_t dir_etiqueta = (uint32_t) dictionary_get(pcb->d_etiquetas,
 					palabra[2]);
+			log_trace(logger, "En %d, salto a la etiqueta %s (linea %d) por ejecutar %s (%s = %d)",
+					pcb->program_counter, palabra[2], dir_etiqueta, sin_retardo,
+					palabra[1], valor_variable);
 			pcb->program_counter = dir_etiqueta;
 		}
 	} else {
@@ -326,14 +345,18 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
 			string_append(&palabra[2], ":");
 			uint32_t dir_etiqueta = (uint32_t) dictionary_get(pcb->d_etiquetas,
 					palabra[2]);
+			log_trace(logger, "En %d, salto a la etiqueta %s (linea %d) por ejecutar %s (%s = %d)",
+					pcb->program_counter, palabra[2], dir_etiqueta, sin_retardo,
+					palabra[1], valor_variable);
 			pcb->program_counter = dir_etiqueta;
 		}
 	}
 	
 	if(retardo != NULL) {
-		printf("Duermo %d en un salto\n", atoi(retardo + 1));
+		log_debug(logger, "Duermo %d segundos especificados en un salto", atoi(retardo + 1));
 		sleep(atoi(retardo + 1));
 	} else {
+		log_debug(logger, "Duermo los %d segundos standar tras ejecutar un salto", time_sleep);
 		sleep(time_sleep);
 	}
 }
@@ -343,7 +366,6 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
  * o 0 si el proceso fue a entrada/salida
  */
 int procesar_asignacion(t_pcb * pcb, char * instruccion) {
-	// todo: usar tiempo_ejecucion para cuando consuma el quantum
 	(pcb->ultima_rafaga)++;
 	char *retardo = strchr(instruccion, ';');
 	char *sentencia = strndup(instruccion, retardo - instruccion);
@@ -352,38 +374,43 @@ int procesar_asignacion(t_pcb * pcb, char * instruccion) {
 	char * variable_asignada = subexpresiones[0];
 	char * expresion = subexpresiones[1];
 
+	log_trace(logger, "Proceso una asignacion de %d: <<%s>>", pcb->id_proceso, expresion);
 
 	if (es_funcion_io(expresion)) {
 #define IO_OK 1
 #define IO_FAIL 0
-		printf("es una io\n");
+		log_trace(logger, "En %d es una asignacion de IO", pcb->id_proceso);
 			if(es_bloqueante(expresion)){
 				int tiempo_acceso = tiempo_ejecucion_io(expresion);
 				dictionary_remove(pcb->datos, variable_asignada);
 				dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_OK);
+				log_debug(logger, "Asigno %d a la variable %s de %d", IO_OK, variable_asignada, pcb->id_proceso);
 
 				t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 				registro_io->tiempo_acceso_io = tiempo_acceso;
 				registro_io->pcb = pcb;
 				sync_queue_push(cola_bloqueados, registro_io);
-				printf("meti un io bloqueante\n");
+				log_lsch(logger, "Mando a bloqueados el proceso %d", pcb->id_proceso);
 				return 0;
 			} else {
-
+				log_trace(logger, "Intento asignar una IO no bloqueante en %d", pcb->id_proceso);
 				if(sem_trywait(threads_iot)){
 				//  devolver codigo error y seguir ejecutando
-					printf("no pudo realizar el wait\n");
+					log_warning(logger, "No pude bloquear un thread de IO para %d", pcb->id_proceso);
 					dictionary_remove(pcb->datos, variable_asignada);
 					dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_FAIL);
+					log_debug(logger, "Asigno %d a la variable %s de %d", IO_FAIL, variable_asignada, pcb->id_proceso);
 					return 1;
 				} else{
 					dictionary_remove(pcb->datos, variable_asignada);
 					dictionary_put(pcb->datos, strdup(variable_asignada), (void *) IO_OK);
+					log_debug(logger, "Asigno %d a la variable %s de %d", IO_OK, variable_asignada, pcb->id_proceso);
 
 					int tiempo_acceso = tiempo_ejecucion_io(expresion);
 					int cantidad_hilos_io;
 					sem_getvalue(threads_iot, &cantidad_hilos_io);
-					printf("Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d\n", pcb->id_proceso, cantidad_hilos_io);
+					log_lsch(logger, "Mando a IO no bloqueante a %d. Cantidad hilos disponibles: %d",
+						pcb->id_proceso, cantidad_hilos_io);
 					t_registro_io * registro_io = malloc(sizeof(t_registro_io));
 					registro_io->tiempo_acceso_io = tiempo_acceso;
 					registro_io->pcb = pcb;
