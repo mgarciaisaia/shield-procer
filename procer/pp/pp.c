@@ -188,7 +188,8 @@ void * procer(void * nada){
 		int pid_proceso = pcb->id_proceso;
 		log_lsch(logger, "Saco el proceso %d de listos y lo ejecuto", pid_proceso);
 		free(registro_listo);
-		int instrucciones_ejecutadas = 0;
+		pcb->valor_estimacion_anterior = calcular_rafaga(pcb->valor_estimacion_anterior, pcb->ultima_rafaga);
+		pcb->ultima_rafaga = 0;
 		bool seguir_ejecutando = true;
 		hayQueSuspenderProceso = 0;
 		while(seguir_ejecutando){
@@ -198,14 +199,14 @@ void * procer(void * nada){
 				
 				hayQueSuspenderProceso = 0;
 				seguir_ejecutando = false;
-			} else if(seguir_ejecutando && quantum && instrucciones_ejecutadas >= quantum - 1) {
+			} else if(seguir_ejecutando && quantum && pcb->ultima_rafaga >= quantum - 1) {
 				sync_queue_push(cola_fin_quantum, pcb);
 				log_lsch(logger, "Paso el proceso %d de ejecucion a fin de quantum", pid_proceso);
 				seguir_ejecutando = false;
 			}
-			instrucciones_ejecutadas++;
+			pcb->ultima_rafaga++;
 		}
-		log_debug(logger, "Ejecute %d instrucciones del proceso %d", instrucciones_ejecutadas, pid_proceso);
+		log_debug(logger, "Ejecute %d instrucciones del proceso %d", pcb->ultima_rafaga, pid_proceso);
 	}
 	return NULL;
 }

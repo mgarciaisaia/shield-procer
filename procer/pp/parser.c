@@ -318,7 +318,6 @@ void procesar_fin_funcion(t_pcb * pcb, char * instruccion) {
 
 void procesar_funcion_imprimir(t_pcb * pcb, char * instruccion) {
 	char ** palabra = string_split(instruccion, " ");
-	(pcb->ultima_rafaga)++;
 	int valor_variable = (int) dictionary_get(pcb->datos, palabra[1]);
 	imprimir(pcb->id_proceso, palabra[1], valor_variable);
 	log_debug(logger, "Imprimo la variable %s: %d", palabra[1], valor_variable);
@@ -368,7 +367,6 @@ void procesar_salto(t_pcb * pcb, char * instruccion) {
  * o 0 si el proceso fue a entrada/salida
  */
 int procesar_asignacion(t_pcb * pcb, char * instruccion) {
-	(pcb->ultima_rafaga)++;
 	char *retardo = strchr(instruccion, ';');
 	char *sentencia = strndup(instruccion, retardo - instruccion);
 
@@ -509,15 +507,21 @@ double calcular_rafaga(double valor_estimacion_anterior, double ultima_rafaga) {
 
 bool es_primer_pcb_mas_antiguo(void * reg_void_1, void * reg_void_2) {
 	t_reg_listos * reg_1 = (t_reg_listos *) reg_void_1;
-	t_reg_listos * reg_2 = (t_reg_listos *) reg_void_2;
 	log_trace(logger, "Tiempo entrada de %d: %lf", reg_1->pcb->id_proceso,
 			reg_1->tiempo_entrada_listos);
+	t_reg_listos * reg_2 = (t_reg_listos *) reg_void_2;
+	log_trace(logger, "Tiempo entrada de %d: %lf", reg_2->pcb->id_proceso,
+			reg_2->tiempo_entrada_listos);
 	return reg_1->tiempo_entrada_listos < reg_2->tiempo_entrada_listos;
 }
 
 bool es_primer_pcb_de_menor_prioridad(void * reg_void_1, void * reg_void_2) {
 	t_reg_listos * reg_1 = (t_reg_listos *) reg_void_1;
+	log_trace(logger, "Prioridad de %d: %d", reg_1->pcb->id_proceso,
+			reg_1->pcb->prioridad);
 	t_reg_listos * reg_2 = (t_reg_listos *) reg_void_2;
+	log_trace(logger, "Prioridad de %d: %d", reg_2->pcb->id_proceso,
+			reg_2->pcb->prioridad);
 	return reg_1->pcb->prioridad < reg_2->pcb->prioridad;
 }
 
@@ -526,8 +530,20 @@ bool es_primer_pcb_de_rafaga_mas_corta(void * reg_void_1, void * reg_void_2) {
 	t_reg_listos * reg_2 = (t_reg_listos *) reg_void_2;
 	double estimacion_rafaga_reg_1 = calcular_rafaga(
 			reg_1->pcb->valor_estimacion_anterior, reg_1->pcb->ultima_rafaga);
+	log_trace(logger, "Estimacion anterior de %d: %lf", reg_1->pcb->id_proceso,
+			reg_1->pcb->valor_estimacion_anterior);
+	log_trace(logger, "Ultima rafaga de %d: %d", reg_1->pcb->id_proceso,
+			reg_1->pcb->ultima_rafaga);
+	log_trace(logger, "Estimacion de %d: %lf", reg_1->pcb->id_proceso,
+			estimacion_rafaga_reg_1);
 	double estimacion_rafaga_reg_2 = calcular_rafaga(
 			reg_2->pcb->valor_estimacion_anterior, reg_2->pcb->ultima_rafaga);
+	log_trace(logger, "Estimacion anterior de %d: %lf", reg_2->pcb->id_proceso,
+			reg_2->pcb->valor_estimacion_anterior);
+	log_trace(logger, "Ultima rafaga %d: %d", reg_2->pcb->id_proceso,
+			reg_2->pcb->ultima_rafaga);
+	log_trace(logger, "Estimacion de %d: %lf", reg_2->pcb->id_proceso,
+			estimacion_rafaga_reg_2);
 	return estimacion_rafaga_reg_1 < estimacion_rafaga_reg_2;
 }
 
