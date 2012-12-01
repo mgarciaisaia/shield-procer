@@ -190,6 +190,7 @@ void * procer(void * nada){
 		free(registro_listo);
 		int instrucciones_ejecutadas = 0;
 		bool seguir_ejecutando = true;
+		hayQueSuspenderProceso = 0;
 		while(seguir_ejecutando){
 			seguir_ejecutando = ejecutarInstruccion(pcb);
 			if(seguir_ejecutando && hayQueSuspenderProceso) {
