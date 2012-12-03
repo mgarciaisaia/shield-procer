@@ -43,6 +43,7 @@ function procesar() {
 	then
 		ipsLocales=$(ifconfig | grep 'inet:' | cut -d: -f2 | cut -d' ' -f1 | paste -sd\|)
 		procesosDeLaSesion=$(ps -o pid= | paste -sd\|)
+		procesosSinEspacios=${procesosDeLaSesion//[[:space:]]}
 		
 		while read conexion
 		do
@@ -55,7 +56,7 @@ function procesar() {
 			if [ $(echo $ipDestino | grep -cv ${ipsLocales//\|/\\\|}) -ne 0 ] # si la linea NO tiene las IPs locales
 			then
 				pidProcesoConexion=$(echo $conexion | cut -d' ' -f7 | cut -d '/' -f1)
-				if [ $(echo $pidProcesoConexion | grep -c ${procesosDeLaSesion//\|/\\\|}) -ne 0 ]
+				if [ $(echo $pidProcesoConexion | grep -c ${procesosSinEspacios//\|/\\\|}) -ne 0 ]
 				then
 					shieldLog INFO "${BASH_SOURCE[0]}: Elimino el proceso $pidProcesoConexion que tenía abierto el socket $socketProcesoConexion"
 					kill -9 $pidProcesoConexion 2>/dev/null # Procesos con N sockets darían N-1 errores
