@@ -45,7 +45,16 @@ leerValoresLimitaciones() {
 		{ cpu+=$2 }
 		END {print cpu}'`
 
-	archivos_abiertos_totales=$(lsof $(tty) | tail -n +2 | wc -l)
+	archivos_abiertos_totales=0
+	for pid in $(ps -o pid=)
+	do
+		archivos_proceso=$( sudo ls -l /proc/${pid}/fd 2>/dev/null)
+		if [ $? -eq 0 ]
+		then
+			cantidad_archivos_proceso=$(echo "$archivos_proceso" | wc -l)
+			archivos_abiertos_totales=$(($archivos_abiertos_totales + cantidad_archivos_proceso))
+		fi
+	done
 
 	#CALCULA LA CANTIDAD DE SOCKETS UTILIZADOS POR LA SESION
 	sockets_totales=0
