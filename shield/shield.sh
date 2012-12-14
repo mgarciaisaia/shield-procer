@@ -124,7 +124,7 @@ trap "" SIGINT
 trap iniciarRegistrarModulos SIGUSR2
 
 # Trappeo el cierre de sesion para matar los procesos que quedan vivos
-trap detenerModulos 0
+trap "detenerModulos && pkill -P $$" 0
 
 function ejecutarModulosDeComando() {
 	for moduloComando in $modulosComando
